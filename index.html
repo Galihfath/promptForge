@@ -697,7 +697,7 @@
   const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
   // Kunci localStorage — dinamai dengan prefix pf_ agar tidak bentrok
-  const LS = { draft: 'pf_draft', presets: 'pf_presets', theme: 'pf_theme', apikey: 'pf_gemini_key' };
+  const LS = { draft: 'pf_draft', presets: 'pf_presets', theme: 'pf_theme', apikey: 'pf_gemini_key', aimodel: 'pf_gemini_model' };
 
   // Debounce sederhana supaya render tidak dipanggil berlebihan saat mengetik
   function debounce(fn, ms) {
@@ -1876,8 +1876,57 @@
      request dikirim LANGSUNG dari browser ke Google — tanpa server
      perantara. Tanpa key, seluruh aplikasi tetap berfungsi offline.
      ============================================================ */
-  const AI_MODEL = 'gemini-2.5-flash';
   const getApiKey = () => (localStorage.getItem(LS.apikey) || '').trim();
+  const AI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+
+  // Nama model Gemini cepat berganti, jadi JANGAN hardcode: tanya API
+  // model apa saja yang tersedia untuk key ini, pilih terbaik, lalu cache.
+  async function listModels(key) {
+    const res = await fetch(AI_BASE + '/models?pageSize=1000', { headers: { 'x-goog-api-key': key } });
+    if (!res.ok) {
+      if (res.status === 400 || res.status === 401 || res.status === 403) throw new Error('BAD_KEY');
+      if (res.status === 429) throw new Error('QUOTA');
+      throw new Error('HTTP_' + res.status);
+    }
+    const data = await res.json();
+    return (data.models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map(m => m.name.replace(/^models\//, ''));
+  }
+
+  // Ranking model: versi terbaru > flash (cepat & hemat kuota) > pro;
+  // hindari model non-teks (embedding/tts/image/live) dan varian lite/preview.
+  function pickModel(names) {
+    const nonText = /(embedding|tts|image|live|audio|veo|imagen|robotics|aqa|gemma|thinking)/i;
+    const usable = names.filter(n => !nonText.test(n));
+    if (usable.includes('gemini-flash-latest')) return 'gemini-flash-latest';
+    const score = n => {
+      // Versi hanya dihitung dari pola "gemini-X.Y" agar nama eksotis
+      // (deep-research-04-2026, antigravity-preview, dll.) tidak menang
+      const vm = n.match(/gemini-(\d+(?:\.\d+)?)/);
+      let s = vm ? parseFloat(vm[1]) * 100 : 0;
+      if (/flash/i.test(n)) s += 50;
+      if (/pro/i.test(n)) s += 30;
+      if (/lite/i.test(n)) s -= 20;
+      if (/preview|exp/i.test(n)) s -= 10;
+      return s;
+    };
+    usable.sort((a, b) => score(b) - score(a));
+    return usable[0] || names[0];
+  }
+
+  async function resolveModel(key, forceRefresh, excludeModel) {
+    if (!forceRefresh) {
+      const cached = localStorage.getItem(LS.aimodel);
+      if (cached) return cached;
+    }
+    let names = await listModels(key);
+    if (excludeModel) names = names.filter(n => n !== excludeModel); // jangan pilih model yang barusan gagal
+    if (!names.length) throw new Error('NO_MODEL');
+    const model = pickModel(names);
+    localStorage.setItem(LS.aimodel, model);
+    return model;
+  }
 
   // Daftar opsi valid — dipakai sebagai enum schema & sanitasi hasil AI
   const OPSI = {
@@ -1887,7 +1936,8 @@
     tipografi: ['Modern Sans', 'Classic Serif', 'Mono/Technical', 'Kombinasi Display+Body'],
   };
 
-  // Panggilan dasar ke Gemini; jsonSchema opsional untuk structured output
+  // Panggilan dasar ke Gemini; jsonSchema opsional untuk structured output.
+  // Model di-resolve dinamis; bila 404 (model pensiun), re-resolve lalu retry sekali.
   async function callGemini(systemText, userText, jsonSchema) {
     const key = getApiKey();
     if (!key) throw new Error('NO_KEY');
@@ -1898,21 +1948,31 @@
         ? { responseMimeType: 'application/json', responseSchema: jsonSchema, temperature: 0.4 }
         : { temperature: 0.6 },
     };
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 60000);
-    let res;
-    try {
-      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify(body),
-        signal: ctrl.signal,
-      });
-    } finally { clearTimeout(timer); }
+    const doRequest = async model => {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 60000);
+      try {
+        return await fetch(`${AI_BASE}/models/${model}:generateContent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify(body),
+          signal: ctrl.signal,
+        });
+      } finally { clearTimeout(timer); }
+    };
+    const model = await resolveModel(key, false);
+    let res = await doRequest(model);
+    if (res.status === 404) {
+      // Model tidak tersedia (pensiun / dibatasi untuk akun baru) →
+      // deteksi ulang daftar model tanpa model yang gagal, coba sekali lagi
+      res = await doRequest(await resolveModel(key, true, model));
+    }
     if (!res.ok) {
+      let apiMsg = '';
+      try { apiMsg = ((await res.json()).error || {}).message || ''; } catch (e) { /* body bukan JSON */ }
       if (res.status === 400 || res.status === 401 || res.status === 403) throw new Error('BAD_KEY');
       if (res.status === 429) throw new Error('QUOTA');
-      throw new Error('HTTP_' + res.status);
+      throw new Error('HTTP_' + res.status + (apiMsg ? ' — ' + apiMsg.slice(0, 120) : ''));
     }
     const data = await res.json();
     const parts = (((data.candidates || [])[0] || {}).content || {}).parts || [];
@@ -1929,6 +1989,7 @@
       BAD_KEY: 'API key ditolak Google — cek lagi key-nya di aistudio.google.com/apikey.',
       QUOTA: 'Kuota gratis Gemini sedang habis (per menit/hari) — tunggu sebentar lalu coba lagi.',
       EMPTY: 'AI tidak mengembalikan jawaban — coba lagi.',
+      NO_MODEL: 'Tidak ada model Gemini yang tersedia untuk key ini — cek key-nya di aistudio.google.com/apikey.',
     }[e.message];
     toast(msg || 'Gagal memanggil AI: ' + e.message, 'error');
     if (e.message === 'NO_KEY') { $('#ai-settings').open = true; $('#f-apikey').focus(); }
