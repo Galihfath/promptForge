@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <!-- ============================================================
+       META & SEO
+       ============================================================ -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptForge — Prompt Builder untuk Membangun Website via Claude Code</title>
+  <meta name="description" content="PromptForge membantu kamu menyusun prompt berkualitas tinggi untuk membangun website via Claude Code. 100% offline, tanpa AI, berbasis rule engine di sisi client.">
+  <link rel="canonical" href="https://prompt.galihupit.my.id/">
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="PromptForge — Prompt Builder untuk Claude Code">
+  <meta property="og:description" content="Susun prompt terstruktur & CLAUDE.md untuk proyek website-mu. Offline, tanpa API, berbasis rule engine.">
+  <meta property="og:url" content="https://prompt.galihupit.my.id/">
+  <meta property="og:image" content="https://prompt.galihupit.my.id/og.png">
+  <meta property="og:locale" content="id_ID">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PromptForge — Prompt Builder untuk Claude Code">
+  <meta name="twitter:description" content="Susun prompt terstruktur & CLAUDE.md untuk proyek website-mu. Offline, tanpa API, berbasis rule engine.">
+  <meta name="twitter:image" content="https://prompt.galihupit.my.id/og.png">
+  <!-- Theme color (light & dark) -->
+  <meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0f1117" media="(prefers-color-scheme: dark)">
+  <!-- Favicon inline (SVG data URI) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%23a855f7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M35 10 L20 36 L30 36 L26 54 L44 26 L33 26 Z' fill='%23fff'/%3E%3C/svg%3E">
+
+  <style>
+  /* ============================================================
+     1. DESIGN TOKENS (CSS Variables)
+     Tema light adalah default; tema dark meng-override variabel.
+     ============================================================ */
+  :root {
+    --c-bg: #f6f7fb;
+    --c-surface: #ffffff;
+    --c-surface-2: #eef0f6;
+    --c-border: #dfe2ec;
+    --c-text: #1c2030;
+    --c-text-dim: #5b6172;
+    --c-primary: #6366f1;
+    --c-primary-strong: #4f46e5;
+    --c-primary-soft: #e5e6fd;
+    --c-accent: #a855f7;
+    --c-success: #059669;
+    --c-danger: #dc2626;
+    --c-code-bg: #f1f2f8;
+    --shadow: 0 1px 3px rgba(20, 24, 40, .08), 0 8px 24px rgba(20, 24, 40, .06);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Code", Consolas, "SF Mono", Menlo, monospace;
+  }
+  [data-theme="dark"] {
+    --c-bg: #0f1117;
+    --c-surface: #171a23;
+    --c-surface-2: #1f2330;
+    --c-border: #2b3040;
+    --c-text: #e7e9f0;
+    --c-text-dim: #9aa1b5;
+    --c-primary: #818cf8;
+    --c-primary-strong: #a5b0ff;
+    --c-primary-soft: #26294a;
+    --c-code-bg: #12141c;
+    --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+  }
+
+  /* ============================================================
+     2. RESET & DASAR
+     ============================================================ */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-ui);
+    background: var(--c-bg);
+    color: var(--c-text);
+    line-height: 1.55;
+    font-size: 15px;
+    transition: background .25s, color .25s;
+  }
+  button { font: inherit; cursor: pointer; }
+  input, select, textarea { font: inherit; color: inherit; }
+  h1, h2, h3 { line-height: 1.25; }
+
+  /* ============================================================
+     3. HEADER
+     ============================================================ */
+  .app-header {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 20px;
+    background: color-mix(in srgb, var(--c-surface) 85%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--c-border);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; }
+  .brand svg { width: 28px; height: 28px; border-radius: 7px; }
+  .brand .tag {
+    font-size: .68rem; font-weight: 600; color: var(--c-primary);
+    background: var(--c-primary-soft); padding: 2px 8px; border-radius: 99px;
+  }
+  .header-spacer { flex: 1; }
+  .icon-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: var(--radius-sm);
+    border: 1px solid var(--c-border); background: var(--c-surface);
+    color: var(--c-text); font-size: 1rem;
+  }
+  .icon-btn:hover { background: var(--c-surface-2); }
+
+  /* ============================================================
+     4. LAYOUT DUA KOLOM (desktop) / TAB (mobile)
+     ============================================================ */
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(380px, 46%) 1fr;
+    gap: 20px;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px;
+    align-items: start;
+  }
+  .pane-form { min-width: 0; }
+  .pane-preview {
+    min-width: 0;
+    position: sticky; top: 66px;
+    max-height: calc(100vh - 86px);
+    display: flex; flex-direction: column;
+  }
+  .mobile-tabs { display: none; }
+
+  @media (max-width: 960px) {
+    .layout { grid-template-columns: 1fr; padding: 12px; padding-bottom: 76px; }
+    .pane-preview { position: static; max-height: none; }
+    /* Di mobile: hanya satu pane yang tampil, dikontrol tab */
+    .layout:not(.show-preview) .pane-preview { display: none; }
+    .layout.show-preview .pane-form { display: none; }
+    .mobile-tabs {
+      display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
+      background: var(--c-surface); border-top: 1px solid var(--c-border);
+    }
+    .mobile-tabs button {
+      flex: 1; padding: 13px; border: none; background: none;
+      color: var(--c-text-dim); font-weight: 600; border-top: 2px solid transparent;
+    }
+    .mobile-tabs button.active { color: var(--c-primary); border-top-color: var(--c-primary); }
+  }
+
+  /* ============================================================
+     5. STEPPER / NAVIGASI SECTION + PROGRESS
+     ============================================================ */
+  .stepper {
+    position: sticky; top: 58px; z-index: 40;
+    display: flex; gap: 4px; padding: 10px 0 12px;
+    background: var(--c-bg);
+  }
+  .stepper button {
+    flex: 1; border: 1px solid var(--c-border); background: var(--c-surface);
+    border-radius: var(--radius-sm); padding: 6px 2px; font-size: .74rem;
+    color: var(--c-text-dim); font-weight: 600; transition: all .15s;
+  }
+  .stepper button .dot {
+    display: block; font-size: .95rem; font-weight: 700; color: var(--c-text);
+  }
+  .stepper button.active { border-color: var(--c-primary); color: var(--c-primary); background: var(--c-primary-soft); }
+  .stepper button.done .dot::after { content: " ✓"; color: var(--c-success); }
+  .progress-track { height: 4px; background: var(--c-surface-2); border-radius: 99px; margin-bottom: 14px; overflow: hidden; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--c-primary), var(--c-accent)); transition: width .3s; }
+
+  /* ============================================================
+     6. KARTU SECTION FORM & KONTROL INPUT
+     ============================================================ */
+  .card {
+    background: var(--c-surface); border: 1px solid var(--c-border);
+    border-radius: var(--radius); padding: 18px; margin-bottom: 16px;
+    box-shadow: var(--shadow); scroll-margin-top: 120px;
+  }
+  .card h2 { font-size: 1rem; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .card h2 .sec-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 6px; font-size: .75rem;
+    background: var(--c-primary-soft); color: var(--c-primary);
+  }
+  .card .sec-desc { font-size: .8rem; color: var(--c-text-dim); margin-bottom: 14px; }
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > label, .field > .group-label {
+    display: block; font-size: .82rem; font-weight: 600; margin-bottom: 6px;
+  }
+  .field .req { color: var(--c-danger); }
+  input[type="text"], select, textarea {
+    width: 100%; padding: 9px 12px;
+    border: 1px solid var(--c-border); border-radius: var(--radius-sm);
+    background: var(--c-bg); outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  input[type="text"]:focus, select:focus, textarea:focus {
+    border-color: var(--c-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-primary) 22%, transparent);
+  }
+  input.invalid, select.invalid { border-color: var(--c-danger); }
+  textarea { resize: vertical; min-height: 68px; }
+
+  /* Grup pilihan (radio/checkbox) sebagai chip */
+  .choices { display: flex; flex-wrap: wrap; gap: 8px; }
+  .choices label {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 12px; border: 1px solid var(--c-border); border-radius: 99px;
+    background: var(--c-bg); font-size: .82rem; cursor: pointer; user-select: none;
+    transition: all .15s;
+  }
+  .choices label:has(input:checked) {
+    border-color: var(--c-primary); background: var(--c-primary-soft);
+    color: var(--c-primary-strong); font-weight: 600;
+  }
+  .choices input { accent-color: var(--c-primary); }
+
+  /* Kondisional (muncul/sembunyi) */
+  .conditional { display: none; margin-top: 8px; }
+  .conditional.show { display: block; }
+
+  /* Palet warna preset */
+  .palettes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+  .palette-btn {
+    display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+    border: 1px solid var(--c-border); border-radius: var(--radius-sm);
+    background: var(--c-bg); font-size: .74rem; text-align: left;
+  }
+  .palette-btn:hover { border-color: var(--c-primary); }
+  .palette-btn .sw { width: 16px; height: 16px; border-radius: 5px; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+  .color-row { display: flex; gap: 14px; }
+  .color-row .cp { display: flex; align-items: center; gap: 8px; font-size: .82rem; }
+  .color-row input[type="color"] {
+    width: 42px; height: 32px; padding: 2px; border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm); background: var(--c-bg); cursor: pointer;
+  }
+  .color-row code { font-family: var(--font-mono); font-size: .78rem; color: var(--c-text-dim); }
+
+  /* Daftar halaman dinamis */
+  .page-row { display: grid; grid-template-columns: 1fr 1.6fr auto; gap: 8px; margin-bottom: 8px; }
+  .page-row button {
+    border: 1px solid var(--c-border); background: var(--c-bg); color: var(--c-danger);
+    border-radius: var(--radius-sm); width: 38px; font-size: 1rem;
+  }
+  .page-row button:hover { background: color-mix(in srgb, var(--c-danger) 12%, var(--c-bg)); }
+  .btn-add {
+    border: 1px dashed var(--c-border); background: none; color: var(--c-primary);
+    border-radius: var(--radius-sm); padding: 8px 14px; font-size: .82rem; font-weight: 600; width: 100%;
+  }
+  .btn-add:hover { border-color: var(--c-primary); background: var(--c-primary-soft); }
+
+  /* ============================================================
+     7. PANEL PREVIEW
+     ============================================================ */
+  .preview-card {
+    background: var(--c-surface); border: 1px solid var(--c-border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    display: flex; flex-direction: column; flex: 1; min-height: 320px; overflow: hidden;
+  }
+  .preview-head {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 10px 14px; border-bottom: 1px solid var(--c-border);
+  }
+  .preview-tabs { display: flex; gap: 4px; background: var(--c-surface-2); padding: 3px; border-radius: var(--radius-sm); }
+  .preview-tabs button {
+    border: none; background: none; padding: 5px 12px; border-radius: 6px;
+    font-size: .8rem; font-weight: 600; color: var(--c-text-dim);
+  }
+  .preview-tabs button.active { background: var(--c-surface); color: var(--c-text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .badges { display: flex; gap: 6px; margin-left: auto; }
+  .badge {
+    font-size: .7rem; font-weight: 600; padding: 3px 9px; border-radius: 99px;
+    background: var(--c-surface-2); color: var(--c-text-dim);
+  }
+  .badge.rules { background: var(--c-primary-soft); color: var(--c-primary-strong); }
+  .preview-body { flex: 1; overflow: auto; padding: 16px; background: var(--c-code-bg); }
+  .preview-body pre {
+    font-family: var(--font-mono); font-size: .78rem; line-height: 1.6;
+    white-space: pre-wrap; word-break: break-word;
+  }
+
+  /* ============================================================
+     8. TOMBOL AKSI & PRESET
+     ============================================================ */
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--c-border); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--c-border); background: var(--c-surface);
+    color: var(--c-text); padding: 8px 13px; border-radius: var(--radius-sm);
+    font-size: .8rem; font-weight: 600; transition: all .15s;
+  }
+  .btn:hover { background: var(--c-surface-2); }
+  .btn.primary { background: var(--c-primary); border-color: var(--c-primary); color: #fff; }
+  .btn.primary:hover { background: var(--c-primary-strong); border-color: var(--c-primary-strong); }
+  .btn.danger { color: var(--c-danger); }
+  .btn.danger:hover { background: color-mix(in srgb, var(--c-danger) 10%, var(--c-surface)); }
+  .preset-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 0 14px 12px; }
+  .preset-bar select { width: auto; flex: 1; min-width: 140px; padding: 7px 10px; font-size: .8rem; }
+  .preset-bar .lbl { font-size: .75rem; font-weight: 600; color: var(--c-text-dim); }
+
+  /* ============================================================
+     9. TOAST NOTIFICATION
+     ============================================================ */
+  #toast-wrap { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .toast {
+    padding: 10px 18px; border-radius: 99px; font-size: .82rem; font-weight: 600;
+    background: var(--c-text); color: var(--c-bg); box-shadow: var(--shadow);
+    animation: toast-in .25s ease-out;
+  }
+  .toast.success { background: var(--c-success); color: #fff; }
+  .toast.error { background: var(--c-danger); color: #fff; }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @media (max-width: 960px) { #toast-wrap { bottom: 66px; } }
+
+  /* Hormati preferensi reduksi gerakan */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       HEADER APLIKASI
+       ============================================================ -->
+  <header class="app-header">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#lg)"/><path d="M35 10 L20 36 L30 36 L26 54 L44 26 L33 26 Z" fill="#fff"/></svg>
+      PromptForge
+      <span class="tag">offline · no-AI</span>
+    </div>
+    <div class="header-spacer"></div>
+    <button id="btn-theme" class="icon-btn" type="button" title="Ganti tema terang/gelap" aria-label="Ganti tema">🌙</button>
+  </header>
+
+  <main class="layout" id="layout">
+
+    <!-- ============================================================
+         KOLOM KIRI: FORM MULTI-SECTION
+         ============================================================ -->
+    <div class="pane-form">
+
+      <!-- Stepper navigasi section + progress bar -->
+      <nav class="stepper" aria-label="Navigasi section">
+        <button type="button" data-goto="sec-a"><span class="dot">A</span>Proyek</button>
+        <button type="button" data-goto="sec-b"><span class="dot">B</span>Stack</button>
+        <button type="button" data-goto="sec-c"><span class="dot">C</span>Desain</button>
+        <button type="button" data-goto="sec-d"><span class="dot">D</span>Halaman</button>
+        <button type="button" data-goto="sec-e"><span class="dot">E</span>Kualitas</button>
+      </nav>
+      <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+
+      <form id="pf-form" autocomplete="off">
+
+        <!-- ================= SECTION A: IDENTITAS PROYEK ================= -->
+        <section class="card" id="sec-a">
+          <h2><span class="sec-badge">A</span>Identitas Proyek</h2>
+          <p class="sec-desc">Info dasar tentang website yang mau dibangun.</p>
+
+          <div class="field">
+            <label for="f-nama">Nama proyek <span class="req">*</span></label>
+            <input type="text" id="f-nama" name="nama" placeholder="cth: Kopi Senja Landing">
+          </div>
+
+          <div class="field">
+            <label for="f-deskripsi">Deskripsi singkat / tujuan website</label>
+            <textarea id="f-deskripsi" name="deskripsi" placeholder="cth: Landing page untuk kedai kopi lokal, tujuannya menarik pelanggan datang & pesan via WhatsApp"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="f-jenis">Jenis website <span class="req">*</span></label>
+            <select id="f-jenis" name="jenis">
+              <option value="">— pilih jenis —</option>
+              <option>Landing Page</option>
+              <option>Company Profile</option>
+              <option>Dashboard/Admin</option>
+              <option>E-commerce</option>
+              <option>Portfolio</option>
+              <option>Blog/Konten</option>
+              <option>Web App/Tool</option>
+              <option>Undangan Digital</option>
+              <option>Lainnya</option>
+            </select>
+            <div class="conditional" id="cond-jenis-lain">
+              <input type="text" id="f-jenis-lain" name="jenisLain" placeholder="Tulis jenis website-mu…">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="f-target">Target pengguna</label>
+            <input type="text" id="f-target" name="target" placeholder="cth: anak muda 18–30 tahun pecinta kopi, dominan akses via HP">
+          </div>
+        </section>
+
+        <!-- ================= SECTION B: TECH STACK ================= -->
+        <section class="card" id="sec-b">
+          <h2><span class="sec-badge">B</span>Tech Stack</h2>
+          <p class="sec-desc">Fondasi teknis proyek.</p>
+
+          <div class="field">
+            <span class="group-label">Stack</span>
+            <div class="choices" role="radiogroup" aria-label="Stack">
+              <label><input type="radio" name="stack" value="Vanilla HTML/CSS/JS (single file)" checked> Vanilla (single file)</label>
+              <label><input type="radio" name="stack" value="Vite + React"> Vite + React</label>
+              <label><input type="radio" name="stack" value="Next.js (App Router)"> Next.js (App Router)</label>
+              <label><input type="radio" name="stack" value="Astro"> Astro</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="group-label">Styling</span>
+            <div class="choices" role="radiogroup" aria-label="Styling">
+              <label><input type="radio" name="styling" value="CSS murni" checked> CSS murni</label>
+              <label><input type="radio" name="styling" value="Tailwind CSS"> Tailwind CSS</label>
+              <label><input type="radio" name="styling" value="CSS Modules"> CSS Modules</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="group-label">Kebutuhan data</span>
+            <div class="choices">
+              <label><input type="checkbox" name="data" value="Static saja" checked> Static saja</label>
+              <label><input type="checkbox" name="data" value="localStorage"> localStorage</label>
+              <label><input type="checkbox" name="data" value="JSON lokal"> JSON lokal</label>
+              <label><input type="checkbox" name="data" value="Integrasi API eksternal" id="f-data-api"> Integrasi API eksternal</label>
+            </div>
+            <div class="conditional" id="cond-api">
+              <input type="text" id="f-api-nama" name="apiName" placeholder="Nama API-nya, cth: RajaOngkir, OpenWeather…">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="f-deploy">Deployment target</label>
+            <select id="f-deploy" name="deploy">
+              <option>Vercel</option>
+              <option>Netlify</option>
+              <option>GitHub Pages</option>
+              <option>Shared hosting</option>
+              <option>Belum tahu</option>
+            </select>
+          </div>
+        </section>
+
+        <!-- ================= SECTION C: DESAIN & UI/UX ================= -->
+        <section class="card" id="sec-c">
+          <h2><span class="sec-badge">C</span>Desain &amp; UI/UX</h2>
+          <p class="sec-desc">Arah visual website.</p>
+
+          <div class="field">
+            <label for="f-gaya">Gaya visual</label>
+            <select id="f-gaya" name="gaya">
+              <option>Minimalist Modern</option>
+              <option>Glassmorphism</option>
+              <option>Neubrutalism</option>
+              <option>Corporate Clean</option>
+              <option>Playful</option>
+              <option>Dark Elegant</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <span class="group-label">Skema warna</span>
+            <div class="color-row">
+              <span class="cp"><input type="color" id="f-primary" name="primary" value="#6366f1"> Primary <code id="hex-primary">#6366f1</code></span>
+              <span class="cp"><input type="color" id="f-secondary" name="secondary" value="#a855f7"> Secondary <code id="hex-secondary">#a855f7</code></span>
+            </div>
+            <div class="palettes" id="palette-list"><!-- diisi JS --></div>
+          </div>
+
+          <div class="field">
+            <label for="f-tipografi">Tipografi</label>
+            <select id="f-tipografi" name="tipografi">
+              <option>Modern Sans</option>
+              <option>Classic Serif</option>
+              <option>Mono/Technical</option>
+              <option>Kombinasi Display+Body</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <span class="group-label">Opsi tambahan</span>
+            <div class="choices">
+              <label><input type="checkbox" name="darkmode" id="f-darkmode"> Dark mode support</label>
+              <label><input type="checkbox" name="animasi" id="f-animasi"> Animasi / micro-interaction</label>
+              <label><input type="checkbox" name="responsive" id="f-responsive" checked> Fully responsive</label>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SECTION D: HALAMAN & FITUR ================= -->
+        <section class="card" id="sec-d">
+          <h2><span class="sec-badge">D</span>Halaman &amp; Fitur</h2>
+          <p class="sec-desc">Struktur halaman dan fitur yang dibutuhkan.</p>
+
+          <div class="field">
+            <span class="group-label">Daftar halaman</span>
+            <div id="pages-list"><!-- baris halaman dinamis, diisi JS --></div>
+            <button type="button" class="btn-add" id="btn-add-page">+ Tambah halaman</button>
+          </div>
+
+          <div class="field">
+            <span class="group-label">Fitur</span>
+            <div class="choices" id="fitur-list">
+              <label><input type="checkbox" name="fitur" value="Form kontak"> Form kontak</label>
+              <label><input type="checkbox" name="fitur" value="Navigasi sticky"> Navigasi sticky</label>
+              <label><input type="checkbox" name="fitur" value="Hero section"> Hero section</label>
+              <label><input type="checkbox" name="fitur" value="Testimoni"> Testimoni</label>
+              <label><input type="checkbox" name="fitur" value="FAQ accordion"> FAQ accordion</label>
+              <label><input type="checkbox" name="fitur" value="Galeri/carousel"> Galeri/carousel</label>
+              <label><input type="checkbox" name="fitur" value="Pricing table"> Pricing table</label>
+              <label><input type="checkbox" name="fitur" value="Search/filter"> Search/filter</label>
+              <label><input type="checkbox" name="fitur" value="Multi-bahasa"> Multi-bahasa</label>
+              <label><input type="checkbox" name="fitur" value="SEO meta lengkap"> SEO meta lengkap</label>
+              <label><input type="checkbox" name="fitur" value="Print-friendly"> Print-friendly</label>
+              <label><input type="checkbox" name="fitur" value="Export data (CSV/PDF)"> Export data (CSV/PDF)</label>
+              <label><input type="checkbox" name="fitur" value="Chart/visualisasi"> Chart/visualisasi</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="group-label">Konten</span>
+            <div class="choices" role="radiogroup" aria-label="Sumber konten">
+              <label><input type="radio" name="kontenMode" value="sendiri"> Saya sediakan kontennya</label>
+              <label><input type="radio" name="kontenMode" value="placeholder" checked> Generate placeholder realistis (ID)</label>
+            </div>
+            <div class="conditional" id="cond-konten">
+              <textarea id="f-konten" name="konten" placeholder="Tempel konten kamu di sini (teks hero, deskripsi produk, dsb)…"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SECTION E: KUALITAS & CONSTRAINT ================= -->
+        <section class="card" id="sec-e">
+          <h2><span class="sec-badge">E</span>Kualitas &amp; Constraint</h2>
+          <p class="sec-desc">Standar kualitas dan batasan.</p>
+
+          <div class="field">
+            <span class="group-label">Standar kualitas</span>
+            <div class="choices">
+              <label><input type="checkbox" name="quality" value="Accessibility" checked> Accessibility (semantic HTML, ARIA, WCAG AA)</label>
+              <label><input type="checkbox" name="quality" value="Performance" checked> Performance (lazy load, optimasi asset)</label>
+              <label><input type="checkbox" name="quality" value="SEO on-page" checked> SEO on-page</label>
+              <label><input type="checkbox" name="quality" value="Mobile-first" checked> Mobile-first</label>
+              <label><input type="checkbox" name="quality" value="Clean code + komentar" checked> Clean code + komentar</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="f-larangan">Hal yang DILARANG</label>
+            <textarea id="f-larangan" name="larangan" placeholder="cth: jangan pakai jQuery, jangan pakai library berat (satu larangan per baris)"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="f-catatan">Catatan tambahan bebas</label>
+            <textarea id="f-catatan" name="catatan" placeholder="Apa pun yang perlu diketahui Claude Code…"></textarea>
+          </div>
+
+          <div class="field">
+            <span class="group-label">Nama file panduan proyek</span>
+            <div class="choices" role="radiogroup" aria-label="Nama file output">
+              <label><input type="radio" name="outName" value="CLAUDE.md" checked> CLAUDE.md</label>
+              <label><input type="radio" name="outName" value="AGENTS.md"> AGENTS.md</label>
+            </div>
+          </div>
+        </section>
+      </form>
+    </div>
+
+    <!-- ============================================================
+         KOLOM KANAN: LIVE PREVIEW
+         ============================================================ -->
+    <div class="pane-preview">
+      <div class="preview-card">
+        <div class="preview-head">
+          <div class="preview-tabs" role="tablist">
+            <button type="button" id="tab-prompt" class="active" role="tab" aria-selected="true">Prompt</button>
+            <button type="button" id="tab-claude" role="tab" aria-selected="false">CLAUDE.md</button>
+          </div>
+          <div class="badges">
+            <span class="badge" id="badge-kata">0 kata</span>
+            <span class="badge rules" id="badge-rules">0 rule aktif</span>
+          </div>
+        </div>
+
+        <div class="preview-body">
+          <pre id="preview-text" aria-live="polite"></pre>
+        </div>
+
+        <!-- Bar preset -->
+        <div class="actions" style="border-top:1px solid var(--c-border); padding-bottom:0; border-bottom:none;">
+          <button type="button" class="btn" id="btn-save-preset">💾 Simpan sebagai Preset</button>
+          <select id="preset-select" style="width:auto; flex:1; min-width:140px; padding:7px 10px; font-size:.8rem;">
+            <option value="">— Muat Preset —</option>
+          </select>
+          <button type="button" class="btn danger" id="btn-del-preset" title="Hapus preset terpilih">🗑</button>
+        </div>
+
+        <!-- Tombol aksi utama -->
+        <div class="actions">
+          <button type="button" class="btn primary" id="btn-copy-prompt">📋 Copy Prompt</button>
+          <button type="button" class="btn" id="btn-dl-prompt">⬇ Download prompt.md</button>
+          <button type="button" class="btn" id="btn-copy-claude">📋 Copy CLAUDE.md</button>
+          <button type="button" class="btn" id="btn-dl-claude">⬇ Download CLAUDE.md</button>
+          <button type="button" class="btn danger" id="btn-reset">↺ Reset Form</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Tab mobile: pindah antara Form dan Preview -->
+  <nav class="mobile-tabs" aria-label="Tab mobile">
+    <button type="button" id="mtab-form" class="active">📝 Form</button>
+    <button type="button" id="mtab-preview">👁 Preview</button>
+  </nav>
+
+  <!-- Wadah toast notification -->
+  <div id="toast-wrap" aria-live="polite"></div>
+
+  <script>
+  /* ==============================================================
+     PromptForge — JavaScript (vanilla, tanpa dependency)
+     Daftar bagian:
+       1. Util & helper kecil
+       2. Data statis (palet warna, konvensi stack, tipografi)
+       3. State form: collectData() & applyData()
+       4. RULE ENGINE  ← tambah rule baru cukup di array RULES
+       5. Template builder: buildPrompt() & buildClaudeMd()
+       6. Render preview + badge + progress
+       7. Aksi: copy, download, reset, validasi
+       8. Preset (localStorage)
+       9. Auto-save, tema, event binding, init
+     ============================================================== */
+  (function () {
+  'use strict';
+
+  /* ============================================================
+     1. UTIL & HELPER
+     ============================================================ */
+  const $  = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+  // Kunci localStorage — dinamai dengan prefix pf_ agar tidak bentrok
+  const LS = { draft: 'pf_draft', presets: 'pf_presets', theme: 'pf_theme' };
+
+  // Debounce sederhana supaya render tidak dipanggil berlebihan saat mengetik
+  function debounce(fn, ms) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  }
+
+  // Toast notification: toast('Tersalin!', 'success' | 'error' | '')
+  function toast(msg, type = '') {
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = msg;
+    $('#toast-wrap').appendChild(el);
+    setTimeout(() => el.remove(), 2500);
+  }
+
+  // Download string sebagai file (Blob) — bekerja juga di protokol file://
+  function downloadFile(filename, text) {
+    const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // Copy ke clipboard, dengan fallback untuk browser/konteks lama
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (e) {
+      // Fallback: textarea tersembunyi + execCommand (berguna di file://)
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
+      ta.remove();
+      return ok;
+    }
+  }
+
+  /* ============================================================
+     2. DATA STATIS
+     ============================================================ */
+
+  // 6 preset palet warna — klik untuk mengisi color picker
+  const PALETTES = [
+    { nama: 'Indigo Night',  p: '#6366f1', s: '#22d3ee' },
+    { nama: 'Sunset Warm',   p: '#f97316', s: '#db2777' },
+    { nama: 'Forest Fresh',  p: '#059669', s: '#84cc16' },
+    { nama: 'Ocean Calm',    p: '#0ea5e9', s: '#6366f1' },
+    { nama: 'Royal Gold',    p: '#7c3aed', s: '#f59e0b' },
+    { nama: 'Monokrom Pro',  p: '#111827', s: '#6b7280' },
+  ];
+
+  // Konvensi per stack: cara menjalankan + struktur folder + penamaan
+  const STACK_CONV = {
+    'Vanilla HTML/CSS/JS (single file)': {
+      run: 'Buka `index.html` langsung di browser (double-click, protokol file://). Tidak ada build step.',
+      folder: '.\n├── index.html    # semua HTML + CSS + JS dalam satu file\n└── assets/       # (opsional) gambar & media',
+      naming: 'Fungsi & variabel JS pakai camelCase; setiap bagian CSS/JS diberi komentar header; class CSS pakai kebab-case.',
+    },
+    'Vite + React': {
+      run: '`npm install` lalu `npm run dev` (dev server), `npm run build` untuk production build.',
+      folder: '.\n├── index.html\n├── src/\n│   ├── main.jsx\n│   ├── App.jsx\n│   ├── components/   # komponen reusable (PascalCase.jsx)\n│   ├── pages/        # komponen level halaman\n│   └── styles/       # CSS global / modules\n└── public/           # asset statis',
+      naming: 'Komponen PascalCase (satu komponen per file), hooks pakai prefix use*, utility camelCase.',
+    },
+    'Next.js (App Router)': {
+      run: '`npm install` lalu `npm run dev` (http://localhost:3000), `npm run build` untuk production.',
+      folder: '.\n├── app/\n│   ├── layout.jsx    # root layout + Metadata API\n│   ├── page.jsx      # halaman utama\n│   └── [route]/page.jsx\n├── components/       # komponen reusable (PascalCase)\n├── lib/              # helper & util\n└── public/           # asset statis',
+      naming: 'Ikuti konvensi App Router (page/layout/loading/error). Server Component secara default, tambahkan "use client" hanya jika perlu.',
+    },
+    'Astro': {
+      run: '`npm install` lalu `npm run dev`, `npm run build` untuk production.',
+      folder: '.\n├── src/\n│   ├── pages/        # routing berbasis file (.astro)\n│   ├── layouts/      # layout bersama\n│   ├── components/   # komponen .astro / framework\n│   └── styles/\n└── public/',
+      naming: 'Komponen .astro PascalCase; minimalkan JavaScript di client (islands architecture).',
+    },
+  };
+
+  // Deskripsi font per pilihan tipografi (untuk design tokens)
+  const TYPO_MAP = {
+    'Modern Sans': 'Heading & body: Inter / system-ui (sans-serif modern)',
+    'Classic Serif': 'Heading & body: Georgia / Playfair Display (serif klasik)',
+    'Mono/Technical': 'Heading & body: JetBrains Mono / ui-monospace (kesan teknikal)',
+    'Kombinasi Display+Body': 'Heading: Poppins (display); Body: Inter (sans-serif)',
+  };
+
+  // Penjelasan tiap checkbox kualitas Section E untuk prompt output
+  const QUALITY_DETAIL = {
+    'Accessibility': 'Accessibility: semantic HTML, atribut ARIA seperlunya, kontras warna memenuhi WCAG AA.',
+    'Performance': 'Performance: lazy load gambar, optimasi asset, hindari resource render-blocking.',
+    'SEO on-page': 'SEO on-page: meta title & description, heading terstruktur, URL & konten yang mudah diindeks.',
+    'Mobile-first': 'Mobile-first: susun layout dari layar kecil dulu, baru scale up via media query.',
+    'Clean code + komentar': 'Clean code: penamaan deskriptif, struktur konsisten, komentar per bagian penting.',
+  };
+
+  // Nilai default form — dipakai saat pertama kali & saat Reset
+  const DEFAULT_DATA = {
+    nama: '', deskripsi: '', jenis: '', jenisLain: '', target: '',
+    stack: 'Vanilla HTML/CSS/JS (single file)', styling: 'CSS murni',
+    data: ['Static saja'], apiName: '', deploy: 'Vercel',
+    gaya: 'Minimalist Modern', primary: '#6366f1', secondary: '#a855f7',
+    tipografi: 'Modern Sans', darkmode: false, animasi: false, responsive: true,
+    pages: [{ nama: '', desk: '' }],
+    fitur: [], kontenMode: 'placeholder', konten: '',
+    quality: ['Accessibility', 'Performance', 'SEO on-page', 'Mobile-first', 'Clean code + komentar'],
+    larangan: '', catatan: '', outName: 'CLAUDE.md',
+  };
+
+  /* ============================================================
+     3. STATE FORM: collectData() & applyData()
+     ============================================================ */
+
+  // Baca seluruh isian form menjadi satu objek data
+  function collectData() {
+    const radio  = name => { const el = $(`input[name="${name}"]:checked`); return el ? el.value : ''; };
+    const checks = name => $$(`input[name="${name}"]:checked`).map(el => el.value);
+    const pages = $$('#pages-list .page-row').map(row => ({
+      nama: $('.page-nama', row).value.trim(),
+      desk: $('.page-desk', row).value.trim(),
+    }));
+    return {
+      // Section A
+      nama: $('#f-nama').value.trim(),
+      deskripsi: $('#f-deskripsi').value.trim(),
+      jenis: $('#f-jenis').value,
+      jenisLain: $('#f-jenis-lain').value.trim(),
+      target: $('#f-target').value.trim(),
+      // Section B
+      stack: radio('stack'),
+      styling: radio('styling'),
+      data: checks('data'),
+      apiName: $('#f-api-nama').value.trim(),
+      deploy: $('#f-deploy').value,
+      // Section C
+      gaya: $('#f-gaya').value,
+      primary: $('#f-primary').value,
+      secondary: $('#f-secondary').value,
+      tipografi: $('#f-tipografi').value,
+      darkmode: $('#f-darkmode').checked,
+      animasi: $('#f-animasi').checked,
+      responsive: $('#f-responsive').checked,
+      // Section D
+      pages: pages,
+      fitur: checks('fitur'),
+      kontenMode: radio('kontenMode'),
+      konten: $('#f-konten').value.trim(),
+      // Section E
+      quality: checks('quality'),
+      larangan: $('#f-larangan').value.trim(),
+      catatan: $('#f-catatan').value.trim(),
+      outName: radio('outName'),
+    };
+  }
+
+  // Tulis objek data kembali ke seluruh kontrol form (untuk load draft/preset)
+  function applyData(d) {
+    d = Object.assign({}, DEFAULT_DATA, d); // isi field yang hilang dengan default
+    const setRadio = (name, val) => {
+      $$(`input[name="${name}"]`).forEach(el => { el.checked = (el.value === val); });
+    };
+    const setChecks = (name, vals) => {
+      $$(`input[name="${name}"]`).forEach(el => { el.checked = vals.includes(el.value); });
+    };
+    $('#f-nama').value = d.nama;
+    $('#f-deskripsi').value = d.deskripsi;
+    $('#f-jenis').value = d.jenis;
+    $('#f-jenis-lain').value = d.jenisLain;
+    $('#f-target').value = d.target;
+    setRadio('stack', d.stack);
+    setRadio('styling', d.styling);
+    setChecks('data', d.data);
+    $('#f-api-nama').value = d.apiName;
+    $('#f-deploy').value = d.deploy;
+    $('#f-gaya').value = d.gaya;
+    $('#f-primary').value = d.primary;
+    $('#f-secondary').value = d.secondary;
+    $('#f-tipografi').value = d.tipografi;
+    $('#f-darkmode').checked = d.darkmode;
+    $('#f-animasi').checked = d.animasi;
+    $('#f-responsive').checked = d.responsive;
+    // Bangun ulang baris halaman dinamis
+    $('#pages-list').innerHTML = '';
+    (d.pages.length ? d.pages : [{ nama: '', desk: '' }]).forEach(p => addPageRow(p.nama, p.desk));
+    setChecks('fitur', d.fitur);
+    setRadio('kontenMode', d.kontenMode);
+    $('#f-konten').value = d.konten;
+    setChecks('quality', d.quality);
+    $('#f-larangan').value = d.larangan;
+    $('#f-catatan').value = d.catatan;
+    setRadio('outName', d.outName);
+    syncUI(); // sinkronkan kondisional, hex label, dsb.
+  }
+
+  // Nilai "jenis" efektif (menangani opsi "Lainnya" + input custom)
+  function jenisEfektif(d) {
+    return d.jenis === 'Lainnya' ? (d.jenisLain || 'Lainnya') : d.jenis;
+  }
+
+  /* ============================================================
+     4. RULE ENGINE  ★ inti kualitas prompt ★
+     --------------------------------------------------------------
+     Setiap rule berbentuk objek:
+       {
+         id      : string unik,
+         label   : nama rule (untuk debugging/badge),
+         when(d) : fungsi kondisi — menerima data form, return boolean,
+         inject  : { stack:[], desain:[], struktur:[], fitur:[], kualitas:[] }
+                   → butir best-practice yang disuntikkan ke section
+                     prompt yang sesuai (semua key opsional),
+         criteria: [] → butir tambahan untuk "Acceptance Criteria".
+       }
+     MENAMBAH RULE BARU = menambah SATU entry di array ini. Selesai.
+     ============================================================ */
+  const RULES = [
+
+    // ---- Berdasarkan jenis website -------------------------------
+    {
+      id: 'landing-page',
+      label: 'Landing Page',
+      when: d => d.jenis === 'Landing Page',
+      inject: {
+        fitur: [
+          'Terapkan copywriting hierarchy: hero (headline + subheadline) → value proposition → social proof → CTA.',
+          'Letakkan CTA utama di atas fold (terlihat tanpa scroll).',
+          'Fokuskan halaman pada SATU tujuan konversi utama; hindari CTA yang saling bersaing.',
+        ],
+      },
+      criteria: [
+        'CTA utama terlihat di viewport pertama (di atas fold) pada layar 360px dan 1280px.',
+        'Alur konten mengikuti hierarchy hero → value proposition → social proof → CTA.',
+      ],
+    },
+    {
+      id: 'dashboard',
+      label: 'Dashboard/Admin',
+      when: d => d.jenis === 'Dashboard/Admin',
+      inject: {
+        fitur: [
+          'Gunakan layout sidebar (navigasi) + topbar (aksi & profil) yang collapsible di layar kecil.',
+          'Tabel data harus mendukung sort dan filter di sisi client.',
+          'Sediakan empty state yang informatif (ikon + teks + aksi) saat data kosong.',
+          'Sediakan loading state (skeleton/spinner) untuk setiap area yang memuat data.',
+        ],
+      },
+      criteria: [
+        'Sidebar dapat di-collapse dan tetap dapat diakses di layar mobile.',
+        'Tabel bisa di-sort dan di-filter; empty state & loading state tampil pada kondisinya masing-masing.',
+      ],
+    },
+    {
+      id: 'ecommerce',
+      label: 'E-commerce',
+      when: d => d.jenis === 'E-commerce',
+      inject: {
+        fitur: [
+          'Product card berisi: gambar (dengan alt), nama, harga, badge (diskon/stok), dan tombol "Tambah ke Keranjang".',
+          'Implementasikan cart yang persistent memakai localStorage (tambah/ubah qty/hapus item).',
+          'Format semua harga dalam Rupiah memakai Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).',
+        ],
+      },
+      criteria: [
+        'Item di keranjang tetap tersimpan setelah halaman di-refresh (localStorage).',
+        'Semua harga tampil dalam format Rupiah (cth: Rp150.000) via Intl.NumberFormat id-ID.',
+      ],
+    },
+    {
+      id: 'undangan-digital',
+      label: 'Undangan Digital',
+      when: d => d.jenis === 'Undangan Digital',
+      inject: {
+        struktur: [
+          'Sertakan section standar undangan: cover (nama tamu dibaca dari URL param, cth: ?to=Nama), countdown menuju hari-H, detail acara, galeri foto, peta lokasi (embed/link), amplop digital (rekening + tombol salin), dan form RSVP.',
+        ],
+        fitur: [
+          'Musik latar: JANGAN autoplay langsung; putar setelah interaksi pertama pengguna (klik tombol "Buka Undangan"), sediakan tombol mute/unmute.',
+        ],
+      },
+      criteria: [
+        'Nama tamu dari URL param (?to=...) tampil di cover; ada fallback jika param kosong.',
+        'Musik baru diputar setelah interaksi pengguna dan bisa di-mute.',
+        'Countdown menghitung mundur ke tanggal acara secara akurat.',
+      ],
+    },
+
+    // ---- Berdasarkan stack ---------------------------------------
+    {
+      id: 'stack-vanilla',
+      label: 'Vanilla single-file',
+      when: d => d.stack === 'Vanilla HTML/CSS/JS (single file)',
+      inject: {
+        stack: [
+          'WAJIB satu file index.html berisi HTML + CSS + JS. Tanpa build step, tanpa dependency eksternal.',
+          'Harus berjalan penuh saat dibuka langsung via double-click (protokol file://).',
+        ],
+      },
+      criteria: [
+        'index.html dibuka via file:// dan semua fitur berjalan tanpa error di console.',
+      ],
+    },
+    {
+      id: 'stack-nextjs',
+      label: 'Next.js App Router',
+      when: d => d.stack === 'Next.js (App Router)',
+      inject: {
+        stack: [
+          'Gunakan App Router (folder app/), BUKAN Pages Router.',
+          'Server Component secara default; tambahkan "use client" hanya pada komponen yang butuh interaktivitas.',
+          'Gunakan Metadata API (export const metadata / generateMetadata) untuk SEO, bukan tag <head> manual.',
+        ],
+      },
+      criteria: [
+        'Tidak ada "use client" pada komponen yang tidak membutuhkan interaktivitas.',
+        'Metadata halaman diatur via Metadata API.',
+      ],
+    },
+
+    // ---- Berdasarkan styling -------------------------------------
+    {
+      id: 'styling-tailwind',
+      label: 'Tailwind CSS',
+      when: d => d.styling === 'Tailwind CSS',
+      inject: {
+        stack: [
+          'Gunakan utility class Tailwind secara konsisten (skala spacing & warna dari config), hindari @apply berlebihan dan CSS custom yang tidak perlu.',
+        ],
+      },
+      criteria: [
+        'Styling dominan memakai utility class Tailwind; @apply hanya untuk pola yang benar-benar berulang.',
+      ],
+    },
+
+    // ---- Berdasarkan opsi desain ---------------------------------
+    {
+      id: 'dark-mode',
+      label: 'Dark mode',
+      when: d => d.darkmode,
+      inject: {
+        desain: [
+          'Implementasikan dark mode dengan CSS variables (design tokens) yang di-override per tema.',
+          'Sediakan toggle tema; simpan preferensi pengguna di localStorage dan hormati prefers-color-scheme sebagai default awal.',
+        ],
+      },
+      criteria: [
+        'Toggle dark mode berfungsi, preferensi bertahan setelah refresh, dan default awal mengikuti prefers-color-scheme.',
+      ],
+    },
+    {
+      id: 'animasi',
+      label: 'Animasi ringan',
+      when: d => d.animasi,
+      inject: {
+        desain: [
+          'Gunakan CSS transition/animation native untuk micro-interaction; hindari library animasi berat (GSAP/Lottie) kecuali diminta.',
+          'Hormati prefers-reduced-motion: matikan/kurangi animasi bila pengguna memintanya.',
+        ],
+      },
+      criteria: [
+        'Animasi nonaktif/berkurang saat prefers-reduced-motion: reduce aktif.',
+      ],
+    },
+
+    // ---- Berdasarkan fitur ---------------------------------------
+    {
+      id: 'multi-bahasa',
+      label: 'Multi-bahasa',
+      when: d => d.fitur.includes('Multi-bahasa'),
+      inject: {
+        fitur: [
+          'Implementasikan i18n sederhana berbasis objek JSON: { id: {...}, en: {...} } dengan fungsi t(key), toggle bahasa, dan pilihan bahasa tersimpan di localStorage.',
+        ],
+      },
+      criteria: [
+        'Semua teks UI berpindah bahasa lewat satu sumber objek JSON; tidak ada teks hardcoded yang tertinggal.',
+      ],
+    },
+    {
+      id: 'seo',
+      label: 'SEO',
+      when: d => d.fitur.includes('SEO meta lengkap') || d.quality.includes('SEO on-page'),
+      inject: {
+        kualitas: [
+          'SEO: lengkapi meta title & description unik per halaman, Open Graph + Twitter Card, dan canonical URL.',
+          'Gunakan heading hierarchy semantik: tepat SATU <h1> per halaman, lalu <h2>/<h3> berurutan tanpa loncat level.',
+        ],
+      },
+      criteria: [
+        'Setiap halaman punya meta title, description, dan Open Graph tags.',
+        'Setiap halaman punya tepat satu <h1> dengan hierarchy heading yang benar.',
+      ],
+    },
+    {
+      id: 'accessibility',
+      label: 'Accessibility',
+      when: d => d.quality.includes('Accessibility'),
+      inject: {
+        kualitas: [
+          'Accessibility: semua input form punya <label> eksplisit; focus state terlihat jelas; semua gambar punya alt text bermakna; seluruh interaksi bisa dioperasikan dengan keyboard.',
+        ],
+      },
+      criteria: [
+        'Semua form control berlabel, focus state terlihat, gambar ber-alt, dan navigasi keyboard berfungsi penuh.',
+      ],
+    },
+
+    // ---- Responsive (default ON) ---------------------------------
+    {
+      id: 'responsive',
+      label: 'Fully responsive',
+      when: d => d.responsive,
+      inject: {
+        desain: [
+          'Layout harus fully responsive: uji pada lebar 360px, 768px, dan 1280px tanpa horizontal scroll.',
+        ],
+      },
+      criteria: [
+        'Tampilan rapi tanpa horizontal scroll pada 360px, 768px, dan 1280px.',
+      ],
+    },
+
+    /* Contoh menambah rule baru — cukup salin pola ini:
+    {
+      id: 'rule-baru',
+      label: 'Nama Rule',
+      when: d => d.fitur.includes('Form kontak'),
+      inject: { fitur: ['Best practice yang mau disuntikkan…'] },
+      criteria: ['Butir acceptance criteria-nya…'],
+    },
+    */
+  ];
+
+  // Ambil semua rule yang kondisinya terpenuhi terhadap data form saat ini
+  function getActiveRules(d) {
+    return RULES.filter(r => {
+      try { return !!r.when(d); } catch (e) { return false; }
+    });
+  }
+
+  // Kumpulkan butir injeksi milik rules aktif untuk satu section tertentu
+  function injectFor(rules, section) {
+    return rules.flatMap(r => (r.inject && r.inject[section]) || []);
+  }
+
+  /* ============================================================
+     5. TEMPLATE BUILDER — PROMPT & CLAUDE.md
+     ============================================================ */
+
+  // Helper: ubah array jadi bullet list markdown; string kosong jika array kosong
+  const bullets = arr => arr.map(x => `- ${x}`).join('\n');
+
+  // ---- 5a. Prompt utama (siap paste ke Claude Code) --------------
+  function buildPrompt(d) {
+    const rules = getActiveRules(d);
+    const jenis = jenisEfektif(d) || '(belum dipilih)';
+    const nama  = d.nama || '(nama proyek)';
+    const L = []; // baris output
+
+    L.push(`# Prompt untuk Claude Code — ${nama}`);
+    L.push('');
+
+    // 1. Peran & Konteks
+    L.push('## 1. Peran & Konteks');
+    L.push('Kamu adalah senior front-end engineer yang teliti, mengutamakan clean code, accessibility, dan performance. Kamu akan membangun proyek berikut sampai tuntas.');
+    L.push('');
+    L.push(`- Nama proyek: **${nama}**`);
+    L.push(`- Jenis website: **${jenis}**`);
+    if (d.deskripsi) L.push(`- Konteks: ${d.deskripsi}`);
+    L.push('');
+
+    // 2. Tujuan
+    L.push('## 2. Tujuan');
+    L.push(d.deskripsi || 'Bangun website sesuai seluruh spesifikasi di bawah ini.');
+    L.push(`Target pengguna: ${d.target || 'pengguna umum'}.`);
+    L.push('');
+
+    // 3. Tech Stack & Batasan
+    L.push('## 3. Tech Stack & Batasan');
+    const dataStr = d.data.length
+      ? d.data.map(x => x === 'Integrasi API eksternal' && d.apiName ? `Integrasi API eksternal (${d.apiName})` : x).join(', ')
+      : 'Static saja';
+    L.push(bullets([
+      `Stack: ${d.stack}`,
+      `Styling: ${d.styling}`,
+      `Kebutuhan data: ${dataStr}`,
+      `Deployment target: ${d.deploy}`,
+    ]));
+    const injStack = injectFor(rules, 'stack');
+    if (injStack.length) L.push(bullets(injStack));
+    L.push('');
+
+    // 4. Desain
+    L.push('## 4. Desain');
+    L.push(bullets([
+      `Gaya visual: ${d.gaya}`,
+      `Warna: primary \`${d.primary}\`, secondary \`${d.secondary}\``,
+      `Tipografi: ${d.tipografi} (${TYPO_MAP[d.tipografi] || d.tipografi})`,
+      `Dark mode: ${d.darkmode ? 'Ya' : 'Tidak'}`,
+      `Animasi/micro-interaction: ${d.animasi ? 'Ya' : 'Tidak'}`,
+      `Fully responsive: ${d.responsive ? 'Ya' : 'Tidak'}`,
+    ]));
+    const injDesain = injectFor(rules, 'desain');
+    if (injDesain.length) L.push(bullets(injDesain));
+    L.push('');
+
+    // 5. Struktur Halaman
+    L.push('## 5. Struktur Halaman');
+    const pages = d.pages.filter(p => p.nama || p.desk);
+    if (pages.length) {
+      pages.forEach((p, i) => {
+        L.push(`${i + 1}. **${p.nama || 'Halaman ' + (i + 1)}**${p.desk ? ' — ' + p.desk : ''}`);
+      });
+    } else {
+      L.push('Satu halaman utama; susun section-nya sesuai best practice jenis website di atas.');
+    }
+    const injStruktur = injectFor(rules, 'struktur');
+    if (injStruktur.length) { L.push(''); L.push(bullets(injStruktur)); }
+    L.push('');
+
+    // 6. Fitur
+    L.push('## 6. Fitur');
+    L.push(d.fitur.length ? bullets(d.fitur) : '- Fitur dasar sesuai jenis website.');
+    const injFitur = injectFor(rules, 'fitur');
+    if (injFitur.length) {
+      L.push('');
+      L.push('Detail implementasi (wajib diikuti):');
+      L.push(bullets(injFitur));
+    }
+    L.push('');
+    L.push(d.kontenMode === 'sendiri'
+      ? 'Konten: gunakan konten yang saya sediakan berikut ini (jangan diubah maknanya):\n\n' + (d.konten || '(konten belum diisi)')
+      : 'Konten: generate placeholder yang realistis dan relevan berbahasa Indonesia (BUKAN lorem ipsum).');
+    L.push('');
+
+    // 7. Standar Kualitas
+    L.push('## 7. Standar Kualitas');
+    const qualityLines = d.quality.map(q => QUALITY_DETAIL[q] || q);
+    L.push(qualityLines.length ? bullets(qualityLines) : '- Ikuti best practice umum front-end.');
+    const injKualitas = injectFor(rules, 'kualitas');
+    if (injKualitas.length) L.push(bullets(injKualitas));
+    L.push('');
+
+    // 8. Larangan
+    L.push('## 8. Larangan');
+    const laranganLines = d.larangan.split('\n').map(s => s.trim()).filter(Boolean);
+    L.push(laranganLines.length ? bullets(laranganLines) : '- Jangan menambah dependency di luar spesifikasi tanpa konfirmasi.');
+    L.push('');
+
+    // 9. Acceptance Criteria — kompilasi dari rule engine + dasar
+    L.push('## 9. Acceptance Criteria');
+    const baseCriteria = ['Tidak ada error di console browser saat semua fitur digunakan.'];
+    const ruleCriteria = rules.flatMap(r => r.criteria || []);
+    [...baseCriteria, ...ruleCriteria].forEach(c => L.push(`- [ ] ${c}`));
+    L.push('');
+
+    // 10. Instruksi Eksekusi
+    L.push('## 10. Instruksi Eksekusi');
+    L.push('Kerjakan dalam satu kali pengerjaan. Buat semua file yang dibutuhkan. Setelah selesai, jelaskan struktur file dan cara menjalankannya.');
+    if (d.catatan) {
+      L.push('');
+      L.push(`Catatan tambahan: ${d.catatan}`);
+    }
+
+    return L.join('\n');
+  }
+
+  // ---- 5b. CLAUDE.md / AGENTS.md (panduan proyek) -----------------
+  function buildClaudeMd(d) {
+    const rules = getActiveRules(d);
+    const jenis = jenisEfektif(d) || '(belum dipilih)';
+    const nama  = d.nama || '(nama proyek)';
+    const conv  = STACK_CONV[d.stack] || STACK_CONV['Vanilla HTML/CSS/JS (single file)'];
+    const L = [];
+
+    L.push(`# ${d.outName === 'AGENTS.md' ? 'AGENTS.md' : 'CLAUDE.md'} — ${nama}`);
+    L.push('');
+
+    // Overview (Section A)
+    L.push('## Overview Proyek');
+    L.push(bullets([
+      `Nama: ${nama}`,
+      `Jenis: ${jenis}`,
+      `Deskripsi: ${d.deskripsi || '-'}`,
+      `Target pengguna: ${d.target || '-'}`,
+    ]));
+    L.push('');
+
+    // Tech stack & cara menjalankan (Section B)
+    L.push('## Tech Stack & Cara Menjalankan');
+    const dataStr = d.data.length
+      ? d.data.map(x => x === 'Integrasi API eksternal' && d.apiName ? `Integrasi API eksternal (${d.apiName})` : x).join(', ')
+      : 'Static saja';
+    L.push(bullets([
+      `Stack: ${d.stack}`,
+      `Styling: ${d.styling}`,
+      `Data: ${dataStr}`,
+      `Deployment: ${d.deploy}`,
+    ]));
+    L.push('');
+    L.push(`**Cara menjalankan:** ${conv.run}`);
+    L.push('');
+
+    // Konvensi kode
+    L.push('## Konvensi Kode');
+    L.push('Struktur folder:');
+    L.push('```');
+    L.push(conv.folder);
+    L.push('```');
+    L.push(bullets([
+      `Penamaan: ${conv.naming}`,
+      'Style guide: konsisten dengan kode yang sudah ada; komentar seperlunya pada bagian yang tidak self-explanatory.',
+    ]));
+    L.push('');
+
+    // Design tokens (Section C)
+    L.push('## Design Tokens');
+    L.push(bullets([
+      `Warna primary: \`${d.primary}\``,
+      `Warna secondary: \`${d.secondary}\``,
+      `Tipografi: ${TYPO_MAP[d.tipografi] || d.tipografi}`,
+      'Spacing scale: 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 px',
+      `Gaya visual: ${d.gaya}`,
+      `Dark mode: ${d.darkmode ? 'ya — pakai CSS variables yang di-override per tema' : 'tidak'}`,
+    ]));
+    L.push('');
+
+    // Do & Don't (Section E + larangan)
+    L.push("## Do & Don't");
+    L.push('**Do:**');
+    const doItems = d.quality.map(q => QUALITY_DETAIL[q] || q);
+    // Butir "kualitas" dari rule aktif ikut masuk sebagai Do
+    injectFor(rules, 'kualitas').forEach(x => doItems.push(x));
+    L.push(doItems.length ? bullets(doItems) : '- Ikuti best practice umum front-end.');
+    L.push('');
+    L.push("**Don't:**");
+    const dontItems = d.larangan.split('\n').map(s => s.trim()).filter(Boolean);
+    dontItems.push('Jangan menambah dependency tanpa izin.');
+    L.push(bullets(dontItems));
+    L.push('');
+
+    // Catatan untuk agent
+    L.push('## Catatan untuk Agent');
+    const notes = [
+      'Selalu jaga konsistensi dengan design tokens di atas.',
+      'Jangan menambah dependency tanpa izin.',
+    ];
+    if (d.catatan) notes.push(d.catatan);
+    L.push(bullets(notes));
+    L.push('');
+
+    return L.join('\n');
+  }
+
+  /* ============================================================
+     6. RENDER PREVIEW + BADGE + PROGRESS
+     ============================================================ */
+  let activeTab = 'prompt'; // 'prompt' | 'claude'
+
+  function render() {
+    const d = collectData();
+    const rules = getActiveRules(d);
+    const text = activeTab === 'prompt' ? buildPrompt(d) : buildClaudeMd(d);
+
+    // Preview memakai textContent agar aman & tampil apa adanya (monospace)
+    $('#preview-text').textContent = text;
+
+    // Badge: jumlah kata dokumen aktif + jumlah rule aktif
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    $('#badge-kata').textContent = `${words} kata`;
+    $('#badge-rules').textContent = `${rules.length} rule aktif`;
+
+    // Label tombol download mengikuti pilihan nama file (CLAUDE.md/AGENTS.md)
+    $('#btn-dl-claude').textContent = `⬇ Download ${d.outName}`;
+    $('#btn-copy-claude').textContent = `📋 Copy ${d.outName}`;
+    $('#tab-claude').textContent = d.outName;
+
+    updateProgress(d);
+  }
+
+  // Progress bar + tanda "done" pada stepper, berdasarkan kelengkapan isian
+  function updateProgress(d) {
+    const doneMap = {
+      'sec-a': !!(d.nama && d.jenis),
+      'sec-b': d.data.length > 0,
+      'sec-c': true, // Section C selalu punya default valid
+      'sec-d': d.pages.some(p => p.nama) || d.fitur.length > 0,
+      'sec-e': d.quality.length > 0,
+    };
+    $$('.stepper button').forEach(btn => {
+      btn.classList.toggle('done', !!doneMap[btn.dataset.goto]);
+    });
+    // Persentase: bagian penting yang sudah terisi
+    const checks = [
+      !!d.nama, !!d.deskripsi, !!d.jenis, !!d.target,
+      d.data.length > 0, d.pages.some(p => p.nama),
+      d.fitur.length > 0, d.quality.length > 0,
+    ];
+    const pct = Math.round(checks.filter(Boolean).length / checks.length * 100);
+    $('#progress-fill').style.width = pct + '%';
+  }
+
+  // Sinkronkan elemen UI yang bergantung pada nilai form (kondisional, hex label)
+  function syncUI() {
+    const d = collectData();
+    $('#cond-jenis-lain').classList.toggle('show', d.jenis === 'Lainnya');
+    $('#cond-api').classList.toggle('show', d.data.includes('Integrasi API eksternal'));
+    $('#cond-konten').classList.toggle('show', d.kontenMode === 'sendiri');
+    $('#hex-primary').textContent = d.primary;
+    $('#hex-secondary').textContent = d.secondary;
+  }
+
+  /* ============================================================
+     7. AKSI: VALIDASI, COPY, DOWNLOAD, RESET
+     ============================================================ */
+
+  // Validasi ringan: nama proyek & jenis website wajib sebelum copy/download
+  function validate() {
+    const d = collectData();
+    let ok = true;
+    $('#f-nama').classList.toggle('invalid', !d.nama);
+    $('#f-jenis').classList.toggle('invalid', !d.jenis);
+    if (!d.nama || !d.jenis) {
+      ok = false;
+      toast('Isi dulu Nama Proyek & Jenis Website ya!', 'error');
+      // Di mobile, pastikan pane form yang tampil supaya field error terlihat
+      $('#layout').classList.remove('show-preview');
+      $('#mtab-form').classList.add('active');
+      $('#mtab-preview').classList.remove('active');
+      const target = !d.nama ? $('#f-nama') : $('#f-jenis');
+      target.scrollIntoView({ block: 'center' });
+      target.focus({ preventScroll: true });
+    }
+    return ok;
+  }
+
+  async function doCopy(builder, label) {
+    if (!validate()) return;
+    const ok = await copyText(builder(collectData()));
+    toast(ok ? `${label} tersalin ke clipboard!` : 'Gagal menyalin 😢', ok ? 'success' : 'error');
+  }
+
+  function doDownload(builder, filename) {
+    if (!validate()) return;
+    downloadFile(filename, builder(collectData()));
+    toast(`${filename} ter-download!`, 'success');
+  }
+
+  function resetForm() {
+    if (!confirm('Reset seluruh isian form? Draft tersimpan juga akan dihapus.')) return;
+    localStorage.removeItem(LS.draft);
+    applyData(DEFAULT_DATA);
+    render();
+    toast('Form di-reset.', 'success');
+  }
+
+  /* ============================================================
+     8. PRESET (localStorage)
+     ============================================================ */
+  function getPresets() {
+    try { return JSON.parse(localStorage.getItem(LS.presets)) || {}; }
+    catch (e) { return {}; }
+  }
+
+  function refreshPresetDropdown() {
+    const sel = $('#preset-select');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Muat Preset —</option>';
+    Object.keys(getPresets()).sort().forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = name;
+      sel.appendChild(opt);
+    });
+    sel.value = current; // pertahankan pilihan bila masih ada
+  }
+
+  function savePreset() {
+    const name = (window.prompt('Nama preset:') || '').trim();
+    if (!name) return;
+    const presets = getPresets();
+    if (presets[name] && !confirm(`Preset "${name}" sudah ada. Timpa?`)) return;
+    presets[name] = collectData();
+    localStorage.setItem(LS.presets, JSON.stringify(presets));
+    refreshPresetDropdown();
+    $('#preset-select').value = name;
+    toast(`Preset "${name}" tersimpan!`, 'success');
+  }
+
+  function loadPreset(name) {
+    const presets = getPresets();
+    if (!presets[name]) return;
+    applyData(presets[name]);
+    render();
+    saveDraft(); // preset yang dimuat langsung jadi draft aktif
+    toast(`Preset "${name}" dimuat.`, 'success');
+  }
+
+  function deletePreset() {
+    const name = $('#preset-select').value;
+    if (!name) { toast('Pilih preset yang mau dihapus dulu.', 'error'); return; }
+    if (!confirm(`Hapus preset "${name}"?`)) return;
+    const presets = getPresets();
+    delete presets[name];
+    localStorage.setItem(LS.presets, JSON.stringify(presets));
+    $('#preset-select').value = '';
+    refreshPresetDropdown();
+    toast(`Preset "${name}" dihapus.`, 'success');
+  }
+
+  /* ============================================================
+     9. AUTO-SAVE, TEMA, HALAMAN DINAMIS, EVENT BINDING, INIT
+     ============================================================ */
+
+  // ---- Auto-save draft ke localStorage setiap perubahan ----------
+  function saveDraft() {
+    localStorage.setItem(LS.draft, JSON.stringify(collectData()));
+  }
+
+  // ---- Baris halaman dinamis (Section D) --------------------------
+  function addPageRow(nama = '', desk = '') {
+    const row = document.createElement('div');
+    row.className = 'page-row';
+    row.innerHTML = `
+      <input type="text" class="page-nama" placeholder="Nama halaman" aria-label="Nama halaman">
+      <input type="text" class="page-desk" placeholder="Deskripsi / section di dalamnya" aria-label="Deskripsi halaman">
+      <button type="button" class="page-del" title="Hapus halaman" aria-label="Hapus halaman">✕</button>`;
+    $('.page-nama', row).value = nama;
+    $('.page-desk', row).value = desk;
+    $('.page-del', row).addEventListener('click', () => {
+      row.remove();
+      onFormChange();
+    });
+    $('#pages-list').appendChild(row);
+  }
+
+  // ---- Palet warna preset -----------------------------------------
+  function renderPalettes() {
+    const wrap = $('#palette-list');
+    PALETTES.forEach(pal => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'palette-btn';
+      btn.innerHTML = `<span class="sw" style="background:${pal.p}"></span><span class="sw" style="background:${pal.s}"></span>${pal.nama}`;
+      btn.addEventListener('click', () => {
+        $('#f-primary').value = pal.p;
+        $('#f-secondary').value = pal.s;
+        onFormChange();
+        toast(`Palet "${pal.nama}" dipakai.`, 'success');
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  // ---- Tema aplikasi PromptForge sendiri --------------------------
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    $('#btn-theme').textContent = theme === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem(LS.theme, theme);
+  }
+  function initTheme() {
+    const saved = localStorage.getItem(LS.theme);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(saved || (prefersDark ? 'dark' : 'light'));
+  }
+
+  // ---- Handler perubahan form: sync UI → render → auto-save -------
+  const onFormChange = debounce(() => {
+    syncUI();
+    render();
+    saveDraft();
+  }, 120);
+
+  // ---- Stepper: klik untuk scroll + highlight section aktif -------
+  function initStepper() {
+    $$('.stepper button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById(btn.dataset.goto).scrollIntoView({ block: 'start' });
+      });
+    });
+    // Tandai section yang sedang terlihat di viewport
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        $$('.stepper button').forEach(b =>
+          b.classList.toggle('active', b.dataset.goto === entry.target.id));
+      });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+    $$('#pf-form section').forEach(sec => observer.observe(sec));
+  }
+
+  // ---- Inisialisasi utama ------------------------------------------
+  function init() {
+    initTheme();
+    renderPalettes();
+    initStepper();
+    refreshPresetDropdown();
+
+    // Muat draft dari localStorage (kalau ada), kalau tidak pakai default
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(LS.draft)); } catch (e) { /* abaikan draft korup */ }
+    applyData(draft || DEFAULT_DATA);
+
+    // Semua perubahan input/select/textarea di form memicu update real-time
+    const form = $('#pf-form');
+    form.addEventListener('input', onFormChange);
+    form.addEventListener('change', onFormChange);
+    // Hilangkan penanda invalid begitu field wajib diisi
+    $('#f-nama').addEventListener('input', e => e.target.classList.remove('invalid'));
+    $('#f-jenis').addEventListener('change', e => e.target.classList.remove('invalid'));
+
+    // Tombol tema
+    $('#btn-theme').addEventListener('click', () =>
+      applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+    // Tab preview (Prompt / CLAUDE.md)
+    const setTab = tab => {
+      activeTab = tab;
+      $('#tab-prompt').classList.toggle('active', tab === 'prompt');
+      $('#tab-claude').classList.toggle('active', tab === 'claude');
+      $('#tab-prompt').setAttribute('aria-selected', tab === 'prompt');
+      $('#tab-claude').setAttribute('aria-selected', tab === 'claude');
+      render();
+    };
+    $('#tab-prompt').addEventListener('click', () => setTab('prompt'));
+    $('#tab-claude').addEventListener('click', () => setTab('claude'));
+
+    // Tab mobile (Form / Preview)
+    const layout = $('#layout');
+    $('#mtab-form').addEventListener('click', () => {
+      layout.classList.remove('show-preview');
+      $('#mtab-form').classList.add('active');
+      $('#mtab-preview').classList.remove('active');
+    });
+    $('#mtab-preview').addEventListener('click', () => {
+      layout.classList.add('show-preview');
+      $('#mtab-preview').classList.add('active');
+      $('#mtab-form').classList.remove('active');
+    });
+
+    // Tombol halaman dinamis
+    $('#btn-add-page').addEventListener('click', () => { addPageRow(); onFormChange(); });
+
+    // Tombol aksi utama
+    $('#btn-copy-prompt').addEventListener('click', () => doCopy(buildPrompt, 'Prompt'));
+    $('#btn-dl-prompt').addEventListener('click', () => doDownload(buildPrompt, 'prompt.md'));
+    $('#btn-copy-claude').addEventListener('click', () => doCopy(buildClaudeMd, collectData().outName));
+    $('#btn-dl-claude').addEventListener('click', () => doDownload(buildClaudeMd, collectData().outName));
+    $('#btn-reset').addEventListener('click', resetForm);
+
+    // Preset
+    $('#btn-save-preset').addEventListener('click', savePreset);
+    $('#btn-del-preset').addEventListener('click', deletePreset);
+    $('#preset-select').addEventListener('change', e => { if (e.target.value) loadPreset(e.target.value); });
+
+    render(); // render pertama
+  }
+
+  init();
+  })();
+  </script>
+</body>
+</html>
