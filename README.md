@@ -4,6 +4,9 @@
 (plus file `CLAUDE.md`/`AGENTS.md`) untuk membangun website via **Claude Code**.
 
 - 🧠 **Tanpa AI / API** — seluruh kecerdasan berasal dari *rule engine* & *template engine* di sisi client.
+- 🪄 **Mulai Cepat** — ketik brief satu kalimat, form terisi otomatis (deteksi kata kunci: jenis, fitur, halaman, gaya, palet).
+- 💡 **Saran Cerdas** — advisor heuristik mendeteksi kombinasi isian yang kurang optimal, dengan tombol "Terapkan" satu klik.
+- 📊 **Skor Prompt** — nilai kelengkapan 0–100 real-time sebagai indikator kesiapan one-shot.
 - 📦 **Satu file** — `index.html` berisi HTML + CSS + vanilla JS. Tanpa framework, build step, atau dependency.
 - 🔌 **Full offline** — jalan langsung via `file://`, auto-save draft & preset ke `localStorage`.
 
@@ -43,6 +46,7 @@ Semua ada di satu file, dibagi per bagian dengan komentar header:
 | `<body>` | Form 5 section (A–E), panel live preview, tab mobile, toast |
 | `<script>` bagian 1–3 | Util, data statis, `collectData()` / `applyData()` |
 | `<script>` bagian 4 | **Rule engine** (array `RULES`) |
+| `<script>` bagian 4b | **Smart engine**: `SMART_*` (kamus keyword Mulai Cepat), `ADVISORS` (saran), `scorePrompt()` |
 | `<script>` bagian 5 | Template builder: `buildPrompt()` & `buildClaudeMd()` |
 | `<script>` bagian 6–9 | Render preview, aksi copy/download, preset, auto-save, init |
 

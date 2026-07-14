@@ -300,6 +300,27 @@
   .preset-bar .lbl { font-size: .75rem; font-weight: 600; color: var(--c-text-dim); }
 
   /* ============================================================
+     8b. MULAI CEPAT, SARAN CERDAS & SKOR
+     ============================================================ */
+  .card-smart { border-color: color-mix(in srgb, var(--c-primary) 40%, var(--c-border)); }
+  .card-smart .opt { font-size: .72rem; font-weight: 500; color: var(--c-text-dim); }
+  .smart-result {
+    margin-top: 10px; font-size: .78rem; color: var(--c-text-dim);
+    background: var(--c-surface-2); border-radius: var(--radius-sm); padding: 8px 12px;
+  }
+  .advisor-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0; border-top: 1px solid var(--c-border); font-size: .8rem;
+  }
+  .advisor-item:first-child { border-top: none; }
+  .advisor-item .msg { flex: 1; }
+  .advisor-item .btn { flex: none; padding: 5px 10px; font-size: .74rem; }
+  .badge.score-hi  { background: color-mix(in srgb, var(--c-success) 18%, var(--c-surface-2)); color: var(--c-success); }
+  .badge.score-mid { background: color-mix(in srgb, #f59e0b 20%, var(--c-surface-2)); color: #b45309; }
+  [data-theme="dark"] .badge.score-mid { color: #fbbf24; }
+  .badge.score-lo  { background: color-mix(in srgb, var(--c-danger) 15%, var(--c-surface-2)); color: var(--c-danger); }
+
+  /* ============================================================
      9. TOAST NOTIFICATION
      ============================================================ */
   #toast-wrap { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; }
@@ -351,6 +372,23 @@
         <button type="button" data-goto="sec-e"><span class="dot">E</span>Kualitas</button>
       </nav>
       <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+
+      <!-- ============ MULAI CEPAT: brief → isi form otomatis ============ -->
+      <section class="card card-smart" id="sec-smart">
+        <h2><span class="sec-badge">🪄</span>Mulai Cepat <span class="opt">(opsional)</span></h2>
+        <p class="sec-desc">Ceritakan proyekmu dalam satu-dua kalimat — PromptForge menebak jenis, fitur, halaman, gaya, dan palet, lalu mengisi form untukmu. Tetap tanpa AI: murni deteksi kata kunci.</p>
+        <label class="sr-only" for="f-brief" style="position:absolute;left:-9999px;">Ceritakan proyekmu</label>
+        <textarea id="f-brief" placeholder="cth: Undangan pernikahan digital yang elegan untuk Raka & Salsa, ada galeri foto, RSVP, dan amplop digital"></textarea>
+        <button type="button" class="btn primary" id="btn-smart" style="margin-top:8px;">🪄 Analisis &amp; Isi Otomatis</button>
+        <div id="smart-result" class="smart-result" hidden></div>
+      </section>
+
+      <!-- ============ SARAN CERDAS: heuristik anti-kombinasi-jelek ====== -->
+      <section class="card" id="advisor-card" hidden>
+        <h2><span class="sec-badge">💡</span>Saran Cerdas <span class="badge rules" id="advisor-count">0</span></h2>
+        <p class="sec-desc">Deteksi otomatis isian yang bisa dibikin lebih optimal.</p>
+        <div id="advisor-list"></div>
+      </section>
 
       <form id="pf-form" autocomplete="off">
 
@@ -581,6 +619,7 @@
           <div class="badges">
             <span class="badge" id="badge-kata">0 kata</span>
             <span class="badge rules" id="badge-rules">0 rule aktif</span>
+            <span class="badge" id="badge-skor" title="Skor kelengkapan prompt (0–100): makin tinggi, makin besar peluang one-shot berhasil">Skor 0</span>
           </div>
         </div>
 
@@ -1503,6 +1542,316 @@
   }
 
   /* ============================================================
+     4b. SMART ENGINE — Mulai Cepat, Saran Cerdas, Skor Prompt
+     --------------------------------------------------------------
+     Tetap TANPA AI: semuanya heuristik (keyword matching + aturan
+     kombinasi) yang mudah di-extend, seperti RULES.
+     ============================================================ */
+
+  // ---- Util warna: hitung rasio kontras WCAG dari 2 warna hex ----
+  function hexToRgb(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function luminance(hex) {
+    const [r, g, b] = hexToRgb(hex).map(v => {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  function contrastRatio(hexA, hexB) {
+    const [l1, l2] = [luminance(hexA), luminance(hexB)].sort((a, b) => b - a);
+    return (l1 + 0.05) / (l2 + 0.05);
+  }
+
+  // ---- Preset halaman & fitur standar per jenis website ----------
+  // Dipakai oleh Mulai Cepat dan Saran Cerdas ("isi halaman standar")
+  const JENIS_PRESETS = {
+    'Landing Page': {
+      pages: [{ nama: 'Home', desk: 'hero, value proposition, keunggulan, testimoni, pricing, FAQ, CTA kontak' }],
+      fitur: ['Hero section', 'Navigasi sticky', 'Testimoni', 'FAQ accordion', 'Form kontak'],
+    },
+    'Company Profile': {
+      pages: [
+        { nama: 'Beranda', desk: 'hero, ringkasan layanan, keunggulan, logo klien, CTA' },
+        { nama: 'Tentang Kami', desk: 'sejarah, visi misi, tim' },
+        { nama: 'Layanan', desk: 'daftar layanan/produk dengan detail' },
+        { nama: 'Kontak', desk: 'form kontak, alamat, peta, jam operasional' },
+      ],
+      fitur: ['Hero section', 'Navigasi sticky', 'Testimoni', 'Form kontak'],
+    },
+    'Dashboard/Admin': {
+      pages: [
+        { nama: 'Overview', desk: 'ringkasan metrik utama + chart' },
+        { nama: 'Data', desk: 'tabel dengan sort, filter, dan pagination' },
+        { nama: 'Pengaturan', desk: 'preferensi tampilan & konfigurasi' },
+      ],
+      fitur: ['Search/filter', 'Chart/visualisasi', 'Export data (CSV/PDF)'],
+    },
+    'E-commerce': {
+      pages: [
+        { nama: 'Beranda', desk: 'hero promo, kategori unggulan, produk terlaris' },
+        { nama: 'Katalog', desk: 'grid produk dengan search & filter kategori/harga' },
+        { nama: 'Detail Produk', desk: 'galeri gambar, deskripsi, harga, tombol tambah ke keranjang' },
+        { nama: 'Keranjang', desk: 'daftar item, ubah qty, total harga, tombol checkout/WhatsApp' },
+      ],
+      fitur: ['Search/filter', 'Galeri/carousel', 'Navigasi sticky', 'Form kontak'],
+    },
+    'Portfolio': {
+      pages: [
+        { nama: 'Home', desk: 'hero singkat (siapa & keahlian) + karya unggulan' },
+        { nama: 'Karya', desk: 'grid semua karya dengan filter kategori' },
+        { nama: 'Tentang', desk: 'bio, skill, tools, pengalaman' },
+        { nama: 'Kontak', desk: 'form kontak + link sosial media' },
+      ],
+      fitur: ['Hero section', 'Galeri/carousel', 'Navigasi sticky', 'Form kontak'],
+    },
+    'Blog/Konten': {
+      pages: [
+        { nama: 'Beranda', desk: 'daftar artikel terbaru + kategori' },
+        { nama: 'Artikel', desk: 'template halaman artikel: isi, meta, artikel terkait' },
+        { nama: 'Tentang', desk: 'profil penulis/redaksi' },
+      ],
+      fitur: ['Search/filter', 'Navigasi sticky', 'SEO meta lengkap'],
+    },
+    'Web App/Tool': {
+      pages: [{ nama: 'App', desk: 'area input, aksi utama, dan hasil (bisa disalin/diunduh)' }],
+      fitur: ['Export data (CSV/PDF)'],
+    },
+    'Undangan Digital': {
+      pages: [{ nama: 'Undangan', desk: 'cover nama tamu, countdown, detail acara, galeri, RSVP, amplop digital, peta' }],
+      fitur: ['Galeri/carousel', 'Hero section'],
+    },
+  };
+
+  // ---- Kamus kata kunci untuk Mulai Cepat -------------------------
+  // Urutan menentukan prioritas: pola pertama yang cocok yang dipakai.
+  const SMART_JENIS = [
+    [/undangan|pernikahan|nikah|wedding|khitan|lamaran|akad/, 'Undangan Digital'],
+    [/dashboard|admin|monitoring|manajemen|kelola|inventori|stok/, 'Dashboard/Admin'],
+    [/toko|e-?commerce|jualan|jual|katalog produk|keranjang|belanja/, 'E-commerce'],
+    [/portofolio|portfolio|karya|fotografer|desainer|ilustrator|arsitek/, 'Portfolio'],
+    [/blog|artikel|berita|majalah/, 'Blog/Konten'],
+    [/kalkulator|konverter|generator|web app|aplikasi/, 'Web App/Tool'],
+    [/company profile|profil perusahaan|perusahaan|instansi|sekolah|yayasan|klinik/, 'Company Profile'],
+    [/landing|promosi|jasa|layanan|umkm|kedai|kafe|warung|kursus|event|kopi/, 'Landing Page'],
+  ];
+  const SMART_FITUR = [
+    [/whatsapp|kontak|hubungi|konsultasi|pesan/, 'Form kontak'],
+    [/galeri|foto|gambar|dokumentasi/, 'Galeri/carousel'],
+    [/harga|paket|pricing|biaya|tarif/, 'Pricing table'],
+    [/testimoni|review|ulasan/, 'Testimoni'],
+    [/faq|tanya jawab/, 'FAQ accordion'],
+    [/cari|search|filter/, 'Search/filter'],
+    [/grafik|chart|statistik|visualisasi/, 'Chart/visualisasi'],
+    [/multi.?bahasa|dua bahasa|bilingual|inggris/, 'Multi-bahasa'],
+    [/cetak|print/, 'Print-friendly'],
+    [/export|unduh data|csv|pdf/, 'Export data (CSV/PDF)'],
+  ];
+  const SMART_GAYA = [
+    [/elegan|mewah|premium|luxury/, 'Dark Elegant'],
+    [/ceria|fun|playful|anak|lucu|imut/, 'Playful'],
+    [/formal|korporat|profesional|perusahaan|instansi/, 'Corporate Clean'],
+    [/berani|nyentrik|bold|brutal|retro/, 'Neubrutalism'],
+    [/kaca|glass|futuristik/, 'Glassmorphism'],
+    [/minimal|simpel|bersih|clean/, 'Minimalist Modern'],
+  ];
+  const SMART_PALET = [
+    [/kopi|kafe|kuliner|makanan|resto|warung|bakery|catering/, 'Sunset Warm'],
+    [/alam|organik|hijau|tani|kebun|eco|herbal/, 'Forest Fresh'],
+    [/mewah|premium|emas|elegan|wedding|undangan|nikah/, 'Royal Gold'],
+    [/keuangan|finance|bank|asuransi|travel|laut/, 'Ocean Calm'],
+    [/teknologi|startup|software|saas|aplikasi/, 'Indigo Night'],
+    [/hukum|notaris|arsitek|fotografer|monokrom/, 'Monokrom Pro'],
+  ];
+
+  // Analisis brief → patch data form + daftar hal yang terdeteksi.
+  // MENAMBAH KECERDASAN = menambah entry di kamus SMART_* di atas.
+  function analyzeBrief(text) {
+    const t = ' ' + text.toLowerCase() + ' ';
+    const detected = [];
+    const patch = {};
+    // 1) Jenis website
+    for (const [re, jenis] of SMART_JENIS) {
+      if (re.test(t)) { patch.jenis = jenis; detected.push('Jenis: ' + jenis); break; }
+    }
+    // 2) Fitur = rekomendasi standar jenis + hasil deteksi keyword
+    const fitur = new Set(patch.jenis && JENIS_PRESETS[patch.jenis] ? JENIS_PRESETS[patch.jenis].fitur : []);
+    SMART_FITUR.forEach(([re, f]) => { if (re.test(t)) fitur.add(f); });
+    if (fitur.size) { patch.fitur = [...fitur]; detected.push('Fitur: ' + patch.fitur.length + ' terpilih'); }
+    // 3) Struktur halaman standar untuk jenis tersebut
+    if (patch.jenis && JENIS_PRESETS[patch.jenis]) {
+      patch.pages = JENIS_PRESETS[patch.jenis].pages.map(p => ({ ...p }));
+      detected.push('Halaman: ' + patch.pages.length + ' halaman standar');
+    }
+    // 4) Gaya visual
+    for (const [re, gaya] of SMART_GAYA) {
+      if (re.test(t)) { patch.gaya = gaya; detected.push('Gaya: ' + gaya); break; }
+    }
+    // 5) Palet warna sesuai industri
+    for (const [re, namaPalet] of SMART_PALET) {
+      if (re.test(t)) {
+        const pal = PALETTES.find(p => p.nama === namaPalet);
+        if (pal) { patch.primary = pal.p; patch.secondary = pal.s; detected.push('Palet: ' + namaPalet); }
+        break;
+      }
+    }
+    // 6) Brief dipakai sebagai deskripsi bila deskripsi masih kosong
+    if (!$('#f-deskripsi').value.trim()) patch.deskripsi = text.trim();
+    return { patch, detected };
+  }
+
+  // ---- SARAN CERDAS (advisor) -------------------------------------
+  // Format mirip RULES: { id, when(d), pesan, patch?(d) }.
+  // `patch` opsional — bila ada, muncul tombol "Terapkan" yang
+  // me-merge hasil patch ke isian form.
+  const ADVISORS = [
+    {
+      id: 'deskripsi-pendek',
+      when: d => !!(d.nama || d.jenis) && d.deskripsi.length < 30,
+      pesan: 'Deskripsi masih sangat singkat. Makin spesifik konteksnya (bisnis apa, tujuannya apa), makin besar peluang hasil one-shot bagus.',
+    },
+    {
+      id: 'target-kosong',
+      when: d => !!d.jenis && !d.target,
+      pesan: 'Target pengguna kosong — ini memengaruhi tone konten & keputusan desain. Isi walau singkat (cth: "ibu muda 25–35, akses via HP").',
+    },
+    {
+      id: 'halaman-kosong',
+      when: d => !!d.jenis && !!JENIS_PRESETS[d.jenis] && !d.pages.some(p => p.nama),
+      pesan: d => 'Belum ada halaman terisi — pakai struktur halaman standar untuk ' + jenisEfektif(d) + '?',
+      patch: d => ({ pages: JENIS_PRESETS[d.jenis].pages.map(p => ({ ...p })) }),
+    },
+    {
+      id: 'fitur-kosong',
+      when: d => !!d.jenis && !!JENIS_PRESETS[d.jenis] && d.fitur.length === 0,
+      pesan: d => 'Belum ada fitur terpilih — pakai fitur rekomendasi untuk ' + jenisEfektif(d) + '?',
+      patch: d => ({ fitur: [...JENIS_PRESETS[d.jenis].fitur] }),
+    },
+    {
+      id: 'ecom-search',
+      when: d => d.jenis === 'E-commerce' && !d.fitur.includes('Search/filter'),
+      pesan: 'Toko online tanpa Search/filter menyulitkan pengunjung menemukan produk.',
+      patch: d => ({ fitur: [...d.fitur, 'Search/filter'] }),
+    },
+    {
+      id: 'ecom-storage',
+      when: d => d.jenis === 'E-commerce' && !d.data.includes('localStorage'),
+      pesan: 'Keranjang belanja yang persistent butuh localStorage agar isi cart tidak hilang saat refresh.',
+      patch: d => ({ data: [...d.data, 'localStorage'] }),
+    },
+    {
+      id: 'dash-chart',
+      when: d => d.jenis === 'Dashboard/Admin' && !d.fitur.includes('Chart/visualisasi'),
+      pesan: 'Dashboard tanpa chart/visualisasi kehilangan nilai utamanya: melihat data sekilas.',
+      patch: d => ({ fitur: [...d.fitur, 'Chart/visualisasi'] }),
+    },
+    {
+      id: 'dash-stack',
+      when: d => d.jenis === 'Dashboard/Admin' && d.stack === 'Vanilla HTML/CSS/JS (single file)',
+      pesan: 'Dashboard dengan banyak state & komponen lebih terkelola memakai Vite + React.',
+      patch: () => ({ stack: 'Vite + React' }),
+    },
+    {
+      id: 'landing-multi',
+      when: d => d.jenis === 'Landing Page' && d.pages.filter(p => p.nama).length > 2,
+      pesan: 'Landing page idealnya satu halaman dengan satu tujuan konversi — banyak halaman memecah fokus pengunjung.',
+    },
+    {
+      id: 'undangan-galeri',
+      when: d => d.jenis === 'Undangan Digital' && !d.fitur.includes('Galeri/carousel'),
+      pesan: 'Undangan digital hampir selalu butuh galeri foto pasangan/acara.',
+      patch: d => ({ fitur: [...d.fitur, 'Galeri/carousel'] }),
+    },
+    {
+      id: 'undangan-stack',
+      when: d => d.jenis === 'Undangan Digital' && d.stack !== 'Vanilla HTML/CSS/JS (single file)',
+      pesan: 'Undangan digital paling praktis sebagai single file — mudah di-share & di-hosting di mana saja.',
+      patch: () => ({ stack: 'Vanilla HTML/CSS/JS (single file)' }),
+    },
+    {
+      id: 'api-ghpages',
+      when: d => d.data.includes('Integrasi API eksternal') && d.deploy === 'GitHub Pages',
+      pesan: 'API eksternal di GitHub Pages rawan kendala CORS dan API key terekspos — Vercel/Netlify lebih aman (ada serverless proxy).',
+      patch: () => ({ deploy: 'Vercel' }),
+    },
+    {
+      id: 'warna-kembar',
+      when: d => d.primary.toLowerCase() === d.secondary.toLowerCase(),
+      pesan: 'Warna primary & secondary sama persis — pilih dua warna berbeda agar hierarchy visual terbentuk.',
+    },
+    {
+      id: 'kontras-rendah',
+      when: d => contrastRatio(d.primary, '#ffffff') < 3 && contrastRatio(d.primary, '#111111') < 3,
+      pesan: d => 'Kontras warna primary (' + d.primary + ') rendah baik di atas terang maupun gelap — teks pada tombol bisa sulit terbaca (WCAG).',
+    },
+    {
+      id: 'playful-animasi',
+      when: d => d.gaya === 'Playful' && !d.animasi,
+      pesan: 'Gaya Playful baru terasa hidup dengan micro-interaction — aktifkan animasi?',
+      patch: () => ({ animasi: true }),
+    },
+    {
+      id: 'darkelegant-darkmode',
+      when: d => d.gaya === 'Dark Elegant' && d.darkmode,
+      pesan: 'Gaya Dark Elegant sudah gelap secara default — toggle dark mode mungkin redundan (kecuali kamu ingin varian terang).',
+    },
+  ];
+
+  // Terapkan patch parsial ke form (dipakai Mulai Cepat & Saran Cerdas)
+  function applyPatch(patch) {
+    applyData(Object.assign(collectData(), patch));
+    render();
+    saveDraft();
+  }
+
+  // Render daftar saran aktif di panel Saran Cerdas
+  function renderAdvisors(d) {
+    const active = ADVISORS.filter(a => {
+      try { return !!a.when(d); } catch (e) { return false; }
+    });
+    $('#advisor-card').hidden = active.length === 0;
+    $('#advisor-count').textContent = active.length;
+    const list = $('#advisor-list');
+    list.innerHTML = '';
+    active.forEach(a => {
+      const item = document.createElement('div');
+      item.className = 'advisor-item';
+      const msg = document.createElement('div');
+      msg.className = 'msg';
+      msg.textContent = typeof a.pesan === 'function' ? a.pesan(d) : a.pesan;
+      item.appendChild(msg);
+      if (a.patch) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn';
+        btn.textContent = 'Terapkan';
+        btn.addEventListener('click', () => { applyPatch(a.patch(d)); toast('Saran diterapkan!', 'success'); });
+        item.appendChild(btn);
+      }
+      list.appendChild(item);
+    });
+  }
+
+  // ---- SKOR PROMPT: seberapa siap prompt ini untuk one-shot -------
+  function scorePrompt(d) {
+    let s = 0;
+    if (d.nama) s += 10;
+    if (d.jenis) s += 10;
+    s += d.deskripsi.length >= 60 ? 15 : d.deskripsi.length >= 15 ? 8 : 0;
+    if (d.target) s += 10;
+    s += Math.min(10, d.pages.filter(p => p.nama).length * 5);  // halaman bernama
+    s += Math.min(10, d.pages.filter(p => p.desk).length * 5);  // halaman berdeskripsi
+    s += Math.min(10, d.fitur.length * 3);                       // fitur terpilih
+    if (d.quality.length >= 3) s += 5;
+    if (d.larangan) s += 5;
+    if (d.kontenMode === 'placeholder' || d.konten) s += 5;
+    s += Math.min(10, getActiveRules(d).length);                 // kekayaan rule aktif
+    return Math.min(100, s);
+  }
+
+  /* ============================================================
      5. TEMPLATE BUILDER — PROMPT & CLAUDE.md
      ============================================================ */
 
@@ -1753,6 +2102,15 @@
     $('#btn-copy-claude').textContent = `📋 Copy ${d.outName}`;
     $('#tab-claude').textContent = d.outName;
 
+    // Skor kelengkapan prompt (0–100) dengan pewarnaan
+    const score = scorePrompt(d);
+    const skorEl = $('#badge-skor');
+    skorEl.textContent = `Skor ${score}`;
+    skorEl.classList.toggle('score-hi', score >= 75);
+    skorEl.classList.toggle('score-mid', score >= 45 && score < 75);
+    skorEl.classList.toggle('score-lo', score < 45);
+
+    renderAdvisors(d);
     updateProgress(d);
   }
 
@@ -2017,6 +2375,22 @@
 
     // Tombol halaman dinamis
     $('#btn-add-page').addEventListener('click', () => { addPageRow(); onFormChange(); });
+
+    // Mulai Cepat: analisis brief → isi form otomatis
+    $('#btn-smart').addEventListener('click', () => {
+      const brief = $('#f-brief').value.trim();
+      if (brief.length < 10) { toast('Ceritakan proyekmu dulu (minimal satu kalimat).', 'error'); return; }
+      const { patch, detected } = analyzeBrief(brief);
+      if (!detected.length) {
+        toast('Belum bisa mengenali proyeknya — sebutkan jenisnya (toko, undangan, dashboard…).', 'error');
+        return;
+      }
+      applyPatch(patch);
+      const res = $('#smart-result');
+      res.hidden = false;
+      res.textContent = '✓ Terdeteksi — ' + detected.join(' · ') + '. Periksa & sesuaikan isian di bawah.';
+      toast('Form terisi otomatis!', 'success');
+    });
 
     // Tombol aksi utama
     $('#btn-copy-prompt').addEventListener('click', () => doCopy(buildPrompt, 'Prompt'));
