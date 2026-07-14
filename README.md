@@ -3,7 +3,8 @@
 **Website Prompt Builder** — aplikasi web stand-alone untuk menyusun prompt berkualitas tinggi
 (plus file `CLAUDE.md`/`AGENTS.md`) untuk membangun website via **Claude Code**.
 
-- 🧠 **Tanpa AI / API** — seluruh kecerdasan berasal dari *rule engine* & *template engine* di sisi client.
+- 🧠 **Offline-first** — rule engine & template engine di sisi client; berfungsi penuh tanpa koneksi/API.
+- ✨ **Mode AI opsional (gratis)** — tempel [Gemini API key gratis](https://aistudio.google.com/apikey) milikmu (BYOK): AI bisa **menganalisis brief → mengisi seluruh form** dan **memperkaya prompt** dengan ide konten & desain spesifik. Key tersimpan hanya di localStorage browser dan dikirim langsung ke Google, tanpa server perantara.
 - 🪄 **Mulai Cepat** — ketik brief satu kalimat, form terisi otomatis (deteksi kata kunci: jenis, fitur, halaman, gaya, palet).
 - 💡 **Saran Cerdas** — advisor heuristik mendeteksi kombinasi isian yang kurang optimal, dengan tombol "Terapkan" satu klik.
 - 📊 **Skor Prompt** — nilai kelengkapan 0–100 real-time sebagai indikator kesiapan one-shot.
@@ -47,6 +48,7 @@ Semua ada di satu file, dibagi per bagian dengan komentar header:
 | `<script>` bagian 1–3 | Util, data statis, `collectData()` / `applyData()` |
 | `<script>` bagian 4 | **Rule engine** (array `RULES`) |
 | `<script>` bagian 4b | **Smart engine**: `SMART_*` (kamus keyword Mulai Cepat), `ADVISORS` (saran), `scorePrompt()` |
+| `<script>` bagian 4c | **AI engine** (opsional): `callGemini()`, `aiAnalyzeBrief()` (structured output + sanitasi), `aiEnhancePrompt()` |
 | `<script>` bagian 5 | Template builder: `buildPrompt()` & `buildClaudeMd()` |
 | `<script>` bagian 6–9 | Render preview, aksi copy/download, preset, auto-save, init |
 
