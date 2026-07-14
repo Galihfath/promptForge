@@ -23,48 +23,52 @@
   <meta name="twitter:description" content="Susun prompt terstruktur & CLAUDE.md untuk proyek website-mu. Rule engine offline + mode AI gratis opsional.">
   <meta name="twitter:image" content="https://prompt.galihupit.my.id/og.png">
   <!-- Theme color (light & dark) -->
-  <meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0f1117" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#16120d" media="(prefers-color-scheme: dark)">
   <!-- Favicon inline (SVG data URI) -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%23a855f7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M35 10 L20 36 L30 36 L26 54 L44 26 L33 26 Z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f59e0b'/%3E%3Cstop offset='1' stop-color='%23ea580c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M35 10 L20 36 L30 36 L26 54 L44 26 L33 26 Z' fill='%23fff'/%3E%3C/svg%3E">
 
   <style>
   /* ============================================================
      1. DESIGN TOKENS (CSS Variables)
      Tema light adalah default; tema dark meng-override variabel.
      ============================================================ */
+  /* Identitas visual: "bengkel tempa" — bara api (ember) di atas arang
+     hangat. Warna panas hanya untuk aksi & aksen; kanvas tetap tenang. */
   :root {
-    --c-bg: #f6f7fb;
-    --c-surface: #ffffff;
-    --c-surface-2: #eef0f6;
-    --c-border: #dfe2ec;
-    --c-text: #1c2030;
-    --c-text-dim: #5b6172;
-    --c-primary: #6366f1;
-    --c-primary-strong: #4f46e5;
-    --c-primary-soft: #e5e6fd;
-    --c-accent: #a855f7;
-    --c-success: #059669;
+    --c-bg: #faf7f2;
+    --c-surface: #fffdf9;
+    --c-surface-2: #f3ede3;
+    --c-border: #e5dbc9;
+    --c-text: #241d15;
+    --c-text-dim: #6f6353;
+    --c-primary: #c2410c;          /* bara — kontras AA di atas terang */
+    --c-primary-strong: #9a3412;
+    --c-primary-soft: #fbe7d4;
+    --c-accent: #f59e0b;           /* kilau amber */
+    --c-success: #047857;
     --c-danger: #dc2626;
-    --c-code-bg: #f1f2f8;
-    --shadow: 0 1px 3px rgba(20, 24, 40, .08), 0 8px 24px rgba(20, 24, 40, .06);
+    --c-code-bg: #f6f1e7;
+    --shadow: 0 1px 3px rgba(56, 40, 20, .08), 0 8px 24px rgba(56, 40, 20, .06);
     --radius: 12px;
     --radius-sm: 8px;
     --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --font-mono: ui-monospace, "Cascadia Code", Consolas, "SF Mono", Menlo, monospace;
+    --font-display: "Cascadia Code", Consolas, ui-monospace, "SF Mono", monospace;
   }
   [data-theme="dark"] {
-    --c-bg: #0f1117;
-    --c-surface: #171a23;
-    --c-surface-2: #1f2330;
-    --c-border: #2b3040;
-    --c-text: #e7e9f0;
-    --c-text-dim: #9aa1b5;
-    --c-primary: #818cf8;
-    --c-primary-strong: #a5b0ff;
-    --c-primary-soft: #26294a;
-    --c-code-bg: #12141c;
-    --shadow: 0 1px 3px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+    --c-bg: #16120d;
+    --c-surface: #1d1812;
+    --c-surface-2: #262019;
+    --c-border: #382e21;
+    --c-text: #f2ece3;
+    --c-text-dim: #a89a89;
+    --c-primary: #fb923c;          /* bara menyala di kegelapan */
+    --c-primary-strong: #fdba74;
+    --c-primary-soft: #3a2613;
+    --c-code-bg: #120e09;
+    --shadow: 0 1px 3px rgba(0, 0, 0, .5), 0 8px 24px rgba(0, 0, 0, .35);
   }
 
   /* ============================================================
@@ -83,6 +87,8 @@
   button { font: inherit; cursor: pointer; }
   input, select, textarea { font: inherit; color: inherit; }
   h1, h2, h3 { line-height: 1.25; }
+  /* Keyboard navigation: focus ring konsisten di semua elemen interaktif */
+  :focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
 
   /* ============================================================
      3. HEADER
@@ -95,11 +101,14 @@
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--c-border);
   }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand h1 { font-family: var(--font-display); font-weight: 700; font-size: 1.02rem; letter-spacing: -.02em; }
+  .brand h1 .glow { color: var(--c-primary); }
   .brand svg { width: 28px; height: 28px; border-radius: 7px; }
   .brand .tag {
-    font-size: .68rem; font-weight: 600; color: var(--c-primary);
-    background: var(--c-primary-soft); padding: 2px 8px; border-radius: 99px;
+    font-family: var(--font-display); font-size: .64rem; font-weight: 600;
+    color: var(--c-primary-strong); background: var(--c-primary-soft);
+    padding: 2px 8px; border-radius: 99px; letter-spacing: .02em;
   }
   .header-spacer { flex: 1; }
   .icon-btn {
@@ -162,7 +171,8 @@
     color: var(--c-text-dim); font-weight: 600; transition: all .15s;
   }
   .stepper button .dot {
-    display: block; font-size: .95rem; font-weight: 700; color: var(--c-text);
+    display: block; font-family: var(--font-display); font-size: .95rem;
+    font-weight: 700; color: var(--c-text);
   }
   .stepper button.active { border-color: var(--c-primary); color: var(--c-primary); background: var(--c-primary-soft); }
   .stepper button.done .dot::after { content: " ✓"; color: var(--c-success); }
@@ -181,13 +191,17 @@
   .card h2 .sec-badge {
     display: inline-flex; align-items: center; justify-content: center;
     width: 22px; height: 22px; border-radius: 6px; font-size: .75rem;
-    background: var(--c-primary-soft); color: var(--c-primary);
+    font-family: var(--font-display);
+    background: var(--c-primary-soft); color: var(--c-primary-strong);
   }
   .card .sec-desc { font-size: .8rem; color: var(--c-text-dim); margin-bottom: 14px; }
   .field { margin-bottom: 14px; }
   .field:last-child { margin-bottom: 0; }
+  /* Label sebagai "stempel bengkel": mono, uppercase, letterspaced */
   .field > label, .field > .group-label {
-    display: block; font-size: .82rem; font-weight: 600; margin-bottom: 6px;
+    display: block; font-family: var(--font-display); font-size: .7rem;
+    font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--c-text-dim); margin-bottom: 6px;
   }
   .field .req { color: var(--c-danger); }
   input[type="text"], input[type="password"], select, textarea {
@@ -270,7 +284,8 @@
   .preview-tabs button.active { background: var(--c-surface); color: var(--c-text); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
   .badges { display: flex; gap: 6px; margin-left: auto; }
   .badge {
-    font-size: .7rem; font-weight: 600; padding: 3px 9px; border-radius: 99px;
+    font-family: var(--font-display); font-size: .68rem; font-weight: 600;
+    padding: 3px 9px; border-radius: 99px;
     background: var(--c-surface-2); color: var(--c-text-dim);
   }
   .badge.rules { background: var(--c-primary-soft); color: var(--c-primary-strong); }
@@ -293,6 +308,9 @@
   .btn:hover { background: var(--c-surface-2); }
   .btn.primary { background: var(--c-primary); border-color: var(--c-primary); color: #fff; }
   .btn.primary:hover { background: var(--c-primary-strong); border-color: var(--c-primary-strong); }
+  /* Di dark mode bara-nya terang, jadi teks tombol harus gelap (kontras AA) */
+  [data-theme="dark"] .btn.primary { color: #20150a; }
+  [data-theme="dark"] .btn.primary:hover { color: #20150a; }
   .btn.danger { color: var(--c-danger); }
   .btn.danger:hover { background: color-mix(in srgb, var(--c-danger) 10%, var(--c-surface)); }
   .preset-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 0 14px 12px; }
@@ -354,8 +372,8 @@
        ============================================================ -->
   <header class="app-header">
     <div class="brand">
-      <svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#lg)"/><path d="M35 10 L20 36 L30 36 L26 54 L44 26 L33 26 Z" fill="#fff"/></svg>
-      PromptForge
+      <svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#ea580c"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#lg)"/><path d="M35 10 L20 36 L30 36 L26 54 L44 26 L33 26 Z" fill="#fff"/></svg>
+      <h1>Prompt<span class="glow">Forge</span></h1>
       <span class="tag">offline-first · AI opsional</span>
     </div>
     <div class="header-spacer"></div>
@@ -648,7 +666,7 @@
           <select id="preset-select" style="width:auto; flex:1; min-width:140px; padding:7px 10px; font-size:.8rem;">
             <option value="">— Muat Preset —</option>
           </select>
-          <button type="button" class="btn danger" id="btn-del-preset" title="Hapus preset terpilih">🗑</button>
+          <button type="button" class="btn danger" id="btn-del-preset" title="Hapus preset terpilih" aria-label="Hapus preset terpilih">🗑</button>
         </div>
 
         <!-- Tombol aksi utama -->

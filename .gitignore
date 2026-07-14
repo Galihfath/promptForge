@@ -25,3 +25,6 @@ desktop.ini
 
 .vercel
 .env*
+
+# Claude Code project skills (dev tooling lokal, jangan ikut deploy)
+.claude/
