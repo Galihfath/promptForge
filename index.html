@@ -28,6 +28,20 @@
   <meta name="theme-color" content="#16120d" media="(prefers-color-scheme: dark)">
   <!-- Favicon inline (SVG data URI) -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f59e0b'/%3E%3Cstop offset='1' stop-color='%23ea580c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M35 10 L20 36 L30 36 L26 54 L44 26 L33 26 Z' fill='%23fff'/%3E%3C/svg%3E">
+  <!-- Structured data untuk rich snippet Google -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "PromptForge",
+    "url": "https://prompt.galihupit.my.id/",
+    "description": "Prompt builder untuk membangun website via Claude Code — rule engine offline dengan mode AI gratis (Gemini) opsional.",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Web",
+    "inLanguage": "id",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "IDR" }
+  }
+  </script>
 
   <style>
   /* ============================================================
@@ -89,6 +103,13 @@
   h1, h2, h3 { line-height: 1.25; }
   /* Keyboard navigation: focus ring konsisten di semua elemen interaktif */
   :focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+  /* Chip pilihan: ring di seluruh pill saat radio/checkbox di dalamnya fokus */
+  .choices label:has(input:focus-visible) { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+  /* Sembunyikan visual tapi tetap terbaca screen reader */
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
 
   /* ============================================================
      3. HEADER
@@ -401,7 +422,7 @@
       <section class="card card-smart" id="sec-smart">
         <h2><span class="sec-badge">🪄</span>Mulai Cepat <span class="opt">(opsional)</span></h2>
         <p class="sec-desc">Ceritakan proyekmu dalam satu-dua kalimat — PromptForge menebak jenis, fitur, halaman, gaya, dan palet, lalu mengisi form untukmu. Tetap tanpa AI: murni deteksi kata kunci.</p>
-        <label class="sr-only" for="f-brief" style="position:absolute;left:-9999px;">Ceritakan proyekmu</label>
+        <label class="visually-hidden" for="f-brief">Ceritakan proyekmu</label>
         <textarea id="f-brief" placeholder="cth: Undangan pernikahan digital yang elegan untuk Raka & Salsa, ada galeri foto, RSVP, dan amplop digital"></textarea>
         <div class="smart-actions">
           <button type="button" class="btn primary" id="btn-smart-ai">✨ Analisis dengan AI</button>
@@ -533,8 +554,8 @@
           <div class="field">
             <span class="group-label">Skema warna</span>
             <div class="color-row">
-              <span class="cp"><input type="color" id="f-primary" name="primary" value="#6366f1"> Primary <code id="hex-primary">#6366f1</code></span>
-              <span class="cp"><input type="color" id="f-secondary" name="secondary" value="#a855f7"> Secondary <code id="hex-secondary">#a855f7</code></span>
+              <span class="cp"><input type="color" id="f-primary" name="primary" value="#6366f1" aria-label="Warna primary"> Primary <code id="hex-primary">#6366f1</code></span>
+              <span class="cp"><input type="color" id="f-secondary" name="secondary" value="#a855f7" aria-label="Warna secondary"> Secondary <code id="hex-secondary">#a855f7</code></span>
             </div>
             <div class="palettes" id="palette-list"><!-- diisi JS --></div>
           </div>
@@ -644,9 +665,9 @@
     <div class="pane-preview">
       <div class="preview-card">
         <div class="preview-head">
-          <div class="preview-tabs" role="tablist">
-            <button type="button" id="tab-prompt" class="active" role="tab" aria-selected="true">Prompt</button>
-            <button type="button" id="tab-claude" role="tab" aria-selected="false">CLAUDE.md</button>
+          <div class="preview-tabs">
+            <button type="button" id="tab-prompt" class="active" aria-pressed="true">Prompt</button>
+            <button type="button" id="tab-claude" aria-pressed="false">CLAUDE.md</button>
           </div>
           <div class="badges">
             <span class="badge" id="badge-kata">0 kata</span>
@@ -657,13 +678,13 @@
         </div>
 
         <div class="preview-body">
-          <pre id="preview-text" aria-live="polite"></pre>
+          <pre id="preview-text"></pre>
         </div>
 
         <!-- Bar preset -->
         <div class="actions" style="border-top:1px solid var(--c-border); padding-bottom:0; border-bottom:none;">
           <button type="button" class="btn" id="btn-save-preset">💾 Simpan sebagai Preset</button>
-          <select id="preset-select" style="width:auto; flex:1; min-width:140px; padding:7px 10px; font-size:.8rem;">
+          <select id="preset-select" aria-label="Muat preset tersimpan" style="width:auto; flex:1; min-width:140px; padding:7px 10px; font-size:.8rem;">
             <option value="">— Muat Preset —</option>
           </select>
           <button type="button" class="btn danger" id="btn-del-preset" title="Hapus preset terpilih" aria-label="Hapus preset terpilih">🗑</button>
@@ -2519,8 +2540,11 @@
      ============================================================ */
 
   // ---- Auto-save draft ke localStorage setiap perubahan ----------
+  // try/catch: di private mode / kuota penuh, gagal simpan tidak boleh
+  // membuat aplikasi error di setiap ketikan.
   function saveDraft() {
-    localStorage.setItem(LS.draft, JSON.stringify(collectData()));
+    try { localStorage.setItem(LS.draft, JSON.stringify(collectData())); }
+    catch (e) { /* abaikan — draft saja yang tidak tersimpan */ }
   }
 
   // ---- Baris halaman dinamis (Section D) --------------------------
@@ -2589,8 +2613,13 @@
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
-        $$('.stepper button').forEach(b =>
-          b.classList.toggle('active', b.dataset.goto === entry.target.id));
+        $$('.stepper button').forEach(b => {
+          const isActive = b.dataset.goto === entry.target.id;
+          b.classList.toggle('active', isActive);
+          // Screen reader ikut tahu section mana yang sedang aktif
+          if (isActive) b.setAttribute('aria-current', 'step');
+          else b.removeAttribute('aria-current');
+        });
       });
     }, { rootMargin: '-30% 0px -60% 0px' });
     $$('#pf-form section').forEach(sec => observer.observe(sec));
@@ -2625,8 +2654,8 @@
       activeTab = tab;
       $('#tab-prompt').classList.toggle('active', tab === 'prompt');
       $('#tab-claude').classList.toggle('active', tab === 'claude');
-      $('#tab-prompt').setAttribute('aria-selected', tab === 'prompt');
-      $('#tab-claude').setAttribute('aria-selected', tab === 'claude');
+      $('#tab-prompt').setAttribute('aria-pressed', tab === 'prompt');
+      $('#tab-claude').setAttribute('aria-pressed', tab === 'claude');
       render();
     };
     $('#tab-prompt').addEventListener('click', () => setTab('prompt'));
