@@ -1070,6 +1070,415 @@
       ],
     },
 
+    // ---- Jenis website lainnya -----------------------------------
+    {
+      id: 'company-profile',
+      label: 'Company Profile',
+      when: d => d.jenis === 'Company Profile',
+      inject: {
+        struktur: [
+          'Section standar company profile: hero (nama + tagline + CTA kontak), Tentang Kami, Layanan/Produk, keunggulan (why us), logo klien/partner, dan kontak (alamat + peta + jam operasional).',
+        ],
+        fitur: [
+          'Tampilkan trust signals: tahun berdiri, jumlah klien/proyek, testimoni, atau sertifikasi.',
+        ],
+      },
+      criteria: [
+        'Informasi kontak (alamat, telepon/WhatsApp, email) mudah ditemukan dari halaman mana pun.',
+      ],
+    },
+    {
+      id: 'portfolio',
+      label: 'Portfolio',
+      when: d => d.jenis === 'Portfolio',
+      inject: {
+        struktur: [
+          'Susun: hero singkat (siapa & keahlian utama), grid karya sebagai fokus halaman, tentang, skill/tools, dan kontak.',
+        ],
+        fitur: [
+          'Grid karya dengan filter kategori di client; tiap karya punya thumbnail, judul, dan detail (modal/halaman) berisi deskripsi, peran, dan hasil.',
+          'Desain harus menonjolkan karya, bukan dekorasi — biarkan visual karya jadi pusat perhatian.',
+        ],
+      },
+      criteria: ['Filter kategori karya berfungsi dan detail tiap karya bisa dibuka.'],
+    },
+    {
+      id: 'blog-konten',
+      label: 'Blog/Konten',
+      when: d => d.jenis === 'Blog/Konten',
+      inject: {
+        struktur: [
+          'Dua template: daftar artikel (kartu berisi judul, ringkasan, tanggal, kategori) dan halaman artikel (heading, meta penulis/tanggal, isi, artikel terkait).',
+        ],
+        fitur: [
+          'Tipografi baca yang nyaman: lebar teks maksimal 65–75 karakter, line-height ±1.7, ukuran font isi minimal 17px.',
+          'Tampilkan estimasi waktu baca dan kategori/tag pada tiap artikel.',
+        ],
+      },
+      criteria: ['Halaman artikel nyaman dibaca: lebar teks terbatas (±72ch) dan hierarchy heading benar.'],
+    },
+    {
+      id: 'webapp-tool',
+      label: 'Web App/Tool',
+      when: d => d.jenis === 'Web App/Tool',
+      inject: {
+        fitur: [
+          'Alur utama tool harus selesai dalam maksimal 3 langkah; aksi primer selalu terlihat menonjol.',
+          'Hasil/output tool bisa disalin (tombol copy) dan/atau di-download.',
+          'Kelola state dengan jelas: initial state, loading, hasil, dan error — masing-masing punya tampilan sendiri.',
+        ],
+      },
+      criteria: [
+        'Fungsi inti tool bekerja end-to-end tanpa error, termasuk pada input kosong/ekstrem (edge case).',
+      ],
+    },
+
+    // ---- Stack & styling lainnya ---------------------------------
+    {
+      id: 'stack-vite-react',
+      label: 'Vite + React',
+      when: d => d.stack === 'Vite + React',
+      inject: {
+        stack: [
+          'Pecah UI menjadi komponen kecil yang reusable (PascalCase, satu komponen per file).',
+          'Gunakan useState/useReducer untuk state lokal; naikkan ke Context hanya jika dipakai lintas komponen. JANGAN menambah state-management library.',
+          'Hindari useEffect yang tidak perlu — turunkan nilai langsung saat render bila memungkinkan.',
+        ],
+      },
+      criteria: ['Tidak ada warning React di console (key pada list, dependency useEffect, dsb).'],
+    },
+    {
+      id: 'stack-astro',
+      label: 'Astro',
+      when: d => d.stack === 'Astro',
+      inject: {
+        stack: [
+          'Default-kan komponen sebagai static .astro (zero JS di client); gunakan directive client:* hanya pada komponen yang benar-benar interaktif.',
+        ],
+      },
+      criteria: ['JavaScript yang terkirim ke client minimal — hanya dari komponen interaktif.'],
+    },
+    {
+      id: 'styling-css-murni',
+      label: 'CSS murni',
+      when: d => d.styling === 'CSS murni',
+      inject: {
+        stack: [
+          'Definisikan design tokens sebagai CSS variables di :root; jangan hardcode warna/spacing berulang.',
+          'Media query mobile-first (min-width); hindari !important dan selector lebih dalam dari 3 level.',
+        ],
+      },
+      criteria: [],
+    },
+    {
+      id: 'styling-css-modules',
+      label: 'CSS Modules',
+      when: d => d.styling === 'CSS Modules',
+      inject: {
+        stack: [
+          'Satu file .module.css per komponen dengan nama class camelCase; token global (warna, spacing) tetap sebagai CSS variables di :root.',
+        ],
+      },
+      criteria: [],
+    },
+
+    // ---- Kebutuhan data ------------------------------------------
+    {
+      id: 'data-localstorage',
+      label: 'localStorage',
+      when: d => d.data.includes('localStorage'),
+      inject: {
+        stack: [
+          'Bungkus akses localStorage dalam helper ber-try/catch (JSON korup atau private mode tidak boleh membuat app crash); gunakan key ber-prefix nama app.',
+        ],
+      },
+      criteria: ['Data pengguna tetap ada setelah refresh; app tetap berjalan bila localStorage kosong/korup.'],
+    },
+    {
+      id: 'data-json-lokal',
+      label: 'JSON lokal',
+      when: d => d.data.includes('JSON lokal'),
+      inject: {
+        stack: [
+          'Pisahkan konten/data ke struktur JSON/objek tersendiri (bukan hardcode tersebar di markup) agar mudah diedit di satu tempat.',
+        ],
+      },
+      criteria: [],
+    },
+    {
+      id: 'data-api',
+      label: 'Integrasi API',
+      when: d => d.data.includes('Integrasi API eksternal'),
+      inject: {
+        stack: [
+          'Setiap request API wajib punya loading state, error state (dengan tombol retry), dan empty state.',
+          'Jangan hardcode API key sensitif di kode client; jika key dibutuhkan, jelaskan cara menyimpannya dengan aman (env var / server proxy).',
+        ],
+      },
+      criteria: ['Saat API gagal atau offline, UI menampilkan pesan error yang jelas — bukan blank atau crash.'],
+    },
+
+    // ---- Deployment target ---------------------------------------
+    {
+      id: 'deploy-ghpages',
+      label: 'GitHub Pages',
+      when: d => d.deploy === 'GitHub Pages',
+      inject: {
+        stack: [
+          'Gunakan path relatif (./asset.png) untuk semua asset & link internal karena situs disajikan di sub-path /nama-repo/.',
+        ],
+      },
+      criteria: [],
+    },
+    {
+      id: 'deploy-shared',
+      label: 'Shared hosting',
+      when: d => d.deploy === 'Shared hosting',
+      inject: {
+        stack: [
+          'Output harus berupa file statis murni yang bisa diunggah via FTP/cPanel; gunakan path relatif, tanpa kebutuhan proses server-side.',
+        ],
+      },
+      criteria: [],
+    },
+
+    // ---- Gaya visual (arah desain konkret per gaya) ---------------
+    {
+      id: 'gaya-minimalist',
+      label: 'Minimalist Modern',
+      when: d => d.gaya === 'Minimalist Modern',
+      inject: {
+        desain: [
+          'Gaya Minimalist Modern: whitespace lega (padding section besar), maksimal 1–2 warna aksen, border tipis & shadow sangat halus, tipografi sebagai elemen desain utama.',
+        ],
+      },
+      criteria: [],
+    },
+    {
+      id: 'gaya-glassmorphism',
+      label: 'Glassmorphism',
+      when: d => d.gaya === 'Glassmorphism',
+      inject: {
+        desain: [
+          'Gaya Glassmorphism: kartu semi-transparan dengan backdrop-filter: blur(10–16px) dan border 1px putih transparan, di atas background gradient/blob berwarna agar efek kaca terlihat; sediakan fallback solid untuk browser tanpa backdrop-filter; jaga kontras teks tetap WCAG AA.',
+        ],
+      },
+      criteria: [],
+    },
+    {
+      id: 'gaya-neubrutalism',
+      label: 'Neubrutalism',
+      when: d => d.gaya === 'Neubrutalism',
+      inject: {
+        desain: [
+          'Gaya Neubrutalism: border solid tebal (2–3px, gelap), box-shadow offset keras tanpa blur (cth: 4px 4px 0), warna cerah kontras tinggi, tipografi bold/besar, hover state yang menggeser elemen (translate).',
+        ],
+      },
+      criteria: [],
+    },
+    {
+      id: 'gaya-corporate',
+      label: 'Corporate Clean',
+      when: d => d.gaya === 'Corporate Clean',
+      inject: {
+        desain: [
+          'Gaya Corporate Clean: grid rapi & konsisten, ruang bernapas cukup, palet didominasi netral dengan primary sebagai aksen, hierarchy informasi sangat jelas, elemen trust (logo klien, angka pencapaian) ditata formal.',
+        ],
+      },
+      criteria: [],
+    },
+    {
+      id: 'gaya-playful',
+      label: 'Playful',
+      when: d => d.gaya === 'Playful',
+      inject: {
+        desain: [
+          'Gaya Playful: border-radius besar, warna cerah, bentuk organik/blob, ikon atau ilustrasi ramah, micro-interaction menyenangkan (bounce halus) — tetap jaga keterbacaan & kontras.',
+        ],
+      },
+      criteria: [],
+    },
+    {
+      id: 'gaya-dark-elegant',
+      label: 'Dark Elegant',
+      when: d => d.gaya === 'Dark Elegant',
+      inject: {
+        desain: [
+          'Gaya Dark Elegant: background gelap kaya (bukan #000 murni, cth: #0e0f13), aksen dari palet dengan nuansa premium, glow & gradient halus; pastikan kontras teks memenuhi WCAG AA.',
+        ],
+      },
+      criteria: [],
+    },
+
+    // ---- Fitur spesifik ------------------------------------------
+    {
+      id: 'fitur-form-kontak',
+      label: 'Form kontak',
+      when: d => d.fitur.includes('Form kontak'),
+      inject: {
+        fitur: [
+          'Form kontak: validasi client-side dengan pesan error inline per field (bukan alert), field wajib bertanda jelas, dan honeypot sederhana anti-spam. Tanpa backend: kirim via link mailto/WhatsApp, atau siapkan action placeholder (cth: Formspree) dengan komentar cara menggantinya.',
+        ],
+      },
+      criteria: ['Form kontak menolak submit saat field wajib kosong/format salah, dengan pesan error inline yang jelas.'],
+    },
+    {
+      id: 'fitur-nav-sticky',
+      label: 'Navigasi sticky',
+      when: d => d.fitur.includes('Navigasi sticky'),
+      inject: {
+        fitur: [
+          'Navigasi sticky: position sticky dengan shadow yang muncul saat halaman di-scroll, highlight link section aktif, dan hamburger menu accessible (button + aria-expanded) di mobile.',
+        ],
+      },
+      criteria: ['Menu mobile bisa dibuka/tutup via tap dan keyboard; link nav menandai section aktif saat scroll.'],
+    },
+    {
+      id: 'fitur-hero',
+      label: 'Hero section',
+      when: d => d.fitur.includes('Hero section'),
+      inject: {
+        fitur: [
+          'Hero section: headline berorientasi benefit (maksimal ±12 kata), subheadline pendukung, CTA primer menonjol (+ CTA sekunder bila perlu), dan visual pendukung yang tidak memperlambat load.',
+        ],
+      },
+      criteria: [],
+    },
+    {
+      id: 'fitur-testimoni',
+      label: 'Testimoni',
+      when: d => d.fitur.includes('Testimoni'),
+      inject: {
+        fitur: [
+          'Testimoni: kartu berisi kutipan, nama, peran/perusahaan, dan avatar (boleh inisial berwarna); konten tetap terbaca tanpa JavaScript (jangan carousel-only).',
+        ],
+      },
+      criteria: [],
+    },
+    {
+      id: 'fitur-faq',
+      label: 'FAQ accordion',
+      when: d => d.fitur.includes('FAQ accordion'),
+      inject: {
+        fitur: [
+          'FAQ accordion: gunakan elemen native <details>/<summary> (atau button + aria-expanded), item pertama terbuka secara default, bisa dioperasikan penuh via keyboard.',
+        ],
+      },
+      criteria: ['Accordion FAQ bisa dibuka/tutup dengan mouse dan keyboard (Enter/Space).'],
+    },
+    {
+      id: 'fitur-galeri',
+      label: 'Galeri/carousel',
+      when: d => d.fitur.includes('Galeri/carousel'),
+      inject: {
+        fitur: [
+          'Galeri/carousel: implementasikan dengan CSS scroll-snap tanpa library, tombol prev/next + dukungan keyboard & swipe, gambar loading="lazy" dengan width/height eksplisit.',
+        ],
+      },
+      criteria: ['Carousel bisa digeser via swipe, tombol, dan keyboard — tanpa library eksternal.'],
+    },
+    {
+      id: 'fitur-pricing',
+      label: 'Pricing table',
+      when: d => d.fitur.includes('Pricing table'),
+      inject: {
+        fitur: [
+          'Pricing table: 2–4 tier dengan tier rekomendasi ditonjolkan (badge "Terpopuler" + penekanan visual), harga format Rupiah, daftar fitur per tier dengan ikon centang, CTA per tier.',
+        ],
+      },
+      criteria: [],
+    },
+    {
+      id: 'fitur-search-filter',
+      label: 'Search/filter',
+      when: d => d.fitur.includes('Search/filter'),
+      inject: {
+        fitur: [
+          'Search/filter: filtering client-side dengan debounce (±200ms), tampilkan jumlah hasil, dan empty state "tidak ditemukan" yang menawarkan reset filter.',
+        ],
+      },
+      criteria: ['Search/filter merespons cepat saat mengetik dan menampilkan empty state saat tidak ada hasil.'],
+    },
+    {
+      id: 'fitur-print',
+      label: 'Print-friendly',
+      when: d => d.fitur.includes('Print-friendly'),
+      inject: {
+        fitur: [
+          'Print-friendly: stylesheet @media print yang menyembunyikan nav/tombol/dekorasi, warna hemat tinta, dan page-break yang tidak memotong konten di tengah.',
+        ],
+      },
+      criteria: ['Hasil print preview rapi: tanpa elemen navigasi dan tanpa konten terpotong janggal.'],
+    },
+    {
+      id: 'fitur-export',
+      label: 'Export data',
+      when: d => d.fitur.includes('Export data (CSV/PDF)'),
+      inject: {
+        fitur: [
+          'Export data: CSV digenerate di client via Blob (escape koma, tanda kutip, dan newline dengan benar); PDF via window.print() + stylesheet print khusus. Tanpa library berat.',
+        ],
+      },
+      criteria: ['File CSV hasil export terbuka benar di Excel/Sheets, termasuk sel yang mengandung koma.'],
+    },
+    {
+      id: 'fitur-chart',
+      label: 'Chart/visualisasi',
+      when: d => d.fitur.includes('Chart/visualisasi'),
+      inject: {
+        fitur: [
+          'Chart/visualisasi: render dengan inline SVG atau <canvas> tanpa library berat; beri label sumbu, nilai saat hover, warna konsisten dengan palet, dan alternatif teks/tabel untuk screen reader.',
+        ],
+      },
+      criteria: [],
+    },
+
+    // ---- Kualitas & konten ---------------------------------------
+    {
+      id: 'performance',
+      label: 'Performance',
+      when: d => d.quality.includes('Performance'),
+      inject: {
+        kualitas: [
+          'Performance: semua gambar pakai loading="lazy" + atribut width/height (hindari layout shift), minimalkan jumlah & ukuran asset, font memakai font-display: swap atau system font stack.',
+        ],
+      },
+      criteria: ['Tidak ada layout shift mencolok saat halaman dimuat; gambar di bawah fold di-lazy-load.'],
+    },
+    {
+      id: 'mobile-first',
+      label: 'Mobile-first',
+      when: d => d.quality.includes('Mobile-first'),
+      inject: {
+        kualitas: [
+          'Mobile-first: tulis style untuk layar kecil dulu lalu scale up via min-width; touch target minimal 44×44px; jangan andalkan hover untuk fungsi penting.',
+        ],
+      },
+      criteria: ['Semua tombol/link nyaman di-tap di layar 360px (touch target ≥ 44px).'],
+    },
+    {
+      id: 'clean-code',
+      label: 'Clean code',
+      when: d => d.quality.includes('Clean code + komentar'),
+      inject: {
+        kualitas: [
+          'Clean code: penamaan deskriptif & konsisten, komentar header per bagian besar, tanpa dead code atau console.log tersisa.',
+        ],
+      },
+      criteria: [],
+    },
+    {
+      id: 'konten-placeholder',
+      label: 'Konten placeholder realistis',
+      when: d => d.kontenMode === 'placeholder',
+      inject: {
+        fitur: [
+          'Konten placeholder harus terasa nyata dan spesifik dengan konteks bisnisnya: nama orang/bisnis Indonesia, harga Rupiah yang wajar, alamat kota Indonesia, angka statistik masuk akal. DILARANG lorem ipsum dan frasa generik seperti "Selamat datang di website kami".',
+        ],
+      },
+      criteria: ['Tidak ada lorem ipsum atau placeholder generik; semua teks terasa seperti konten sungguhan.'],
+    },
+
     /* Contoh menambah rule baru — cukup salin pola ini:
     {
       id: 'rule-baru',
@@ -1118,6 +1527,13 @@
     L.push(`- Jenis website: **${jenis}**`);
     if (d.deskripsi) L.push(`- Konteks: ${d.deskripsi}`);
     L.push('');
+    L.push('Prinsip kerja:');
+    L.push(bullets([
+      'Kerjakan sampai tuntas dalam satu sesi; jangan berhenti untuk bertanya — ambil keputusan terbaik berdasarkan spesifikasi ini.',
+      'Untuk detail yang tidak disebut, ikuti best practice modern dan jaga konsistensi dengan design tokens.',
+      'Kejar hasil yang terlihat profesional dan polished, bukan sekadar berfungsi.',
+    ]));
+    L.push('');
 
     // 2. Tujuan
     L.push('## 2. Tujuan');
@@ -1149,6 +1565,7 @@
       `Dark mode: ${d.darkmode ? 'Ya' : 'Tidak'}`,
       `Animasi/micro-interaction: ${d.animasi ? 'Ya' : 'Tidak'}`,
       `Fully responsive: ${d.responsive ? 'Ya' : 'Tidak'}`,
+      'Definisikan semua warna, font, dan spacing sebagai design tokens (CSS variables) di satu tempat; turunkan shade/variasi dari primary & secondary secara konsisten.',
     ]));
     const injDesain = injectFor(rules, 'desain');
     if (injDesain.length) L.push(bullets(injDesain));
@@ -1199,14 +1616,25 @@
 
     // 9. Acceptance Criteria — kompilasi dari rule engine + dasar
     L.push('## 9. Acceptance Criteria');
-    const baseCriteria = ['Tidak ada error di console browser saat semua fitur digunakan.'];
+    const baseCriteria = [
+      'Tidak ada error di console browser saat semua fitur digunakan.',
+      'Semua link, tombol, dan form berfungsi — tidak ada elemen mati atau href="#" tanpa aksi.',
+      'Tampilan terlihat profesional & konsisten: spacing seragam, alignment rapi, visual hierarchy jelas.',
+      'Semua section terisi konten utuh — tidak ada teks placeholder yang tertinggal.',
+    ];
     const ruleCriteria = rules.flatMap(r => r.criteria || []);
     [...baseCriteria, ...ruleCriteria].forEach(c => L.push(`- [ ] ${c}`));
     L.push('');
 
     // 10. Instruksi Eksekusi
     L.push('## 10. Instruksi Eksekusi');
-    L.push('Kerjakan dalam satu kali pengerjaan. Buat semua file yang dibutuhkan. Setelah selesai, jelaskan struktur file dan cara menjalankannya.');
+    L.push('Kerjakan dalam SATU kali pengerjaan dan buat semua file yang dibutuhkan, dengan urutan:');
+    L.push('1. Scaffold struktur file dan definisikan design tokens (warna, font, spacing) terlebih dulu.');
+    L.push('2. Bangun layout dan seluruh halaman/section lengkap dengan kontennya.');
+    L.push('3. Implementasikan semua fitur dan interaksinya.');
+    L.push('4. QA pass terakhir: periksa SETIAP butir Acceptance Criteria di atas satu per satu, perbaiki yang belum lolos.');
+    L.push('');
+    L.push('Setelah selesai: jelaskan struktur file, cara menjalankannya, dan konfirmasi singkat bahwa setiap acceptance criteria terpenuhi.');
     if (d.catatan) {
       L.push('');
       L.push(`Catatan tambahan: ${d.catatan}`);
